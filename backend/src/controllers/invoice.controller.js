@@ -51,7 +51,7 @@ const getAll = async (req, res) => {
     if (from || to) {
       query.invoiceDate = {};
       if (from) query.invoiceDate.$gte = from;
-      if (to)   query.invoiceDate.$lte = to;
+      if (to)   query.invoiceDate.$lte = to.length === 10 ? to + 'T23:59:59.999Z' : to;
     }
     if (search) {
       query.$or = [
@@ -59,12 +59,17 @@ const getAll = async (req, res) => {
         { 'customer.name': new RegExp(search, 'i') },
       ];
     }
-    const skip = (Number(page) - 1) * Number(limit);
+    const lim = Number(limit);
+    const isUnlimited = lim === 0 || isNaN(lim);
+    const skip = isUnlimited ? 0 : (Number(page) - 1) * lim;
+
     const [invoices, total] = await Promise.all([
-      Invoice.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      isUnlimited
+        ? Invoice.find(query).sort({ invoiceDate: -1, createdAt: -1 })
+        : Invoice.find(query).sort({ invoiceDate: -1, createdAt: -1 }).skip(skip).limit(lim),
       Invoice.countDocuments(query),
     ]);
-    res.json({ invoices, total, page: Number(page), limit: Number(limit) });
+    res.json({ invoices, total, page: Number(page), limit: isUnlimited ? total : lim });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

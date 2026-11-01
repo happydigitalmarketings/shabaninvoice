@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { BarChart3, IndianRupee, FileText, TrendingUp, AlertCircle } from 'lucide-react';
+import { BarChart3, IndianRupee, FileText, TrendingUp, AlertCircle, Archive } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import toast from 'react-hot-toast';
+import DateWiseDownloadModal from '../components/invoice/DateWiseDownloadModal';
 
 interface Summary {
   totalInvoices: number;
@@ -21,6 +22,7 @@ const Reports: React.FC = () => {
   const [to, setTo]     = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
 
   const quickRanges = [
     { label: 'This Month',   from: format(startOfMonth(new Date()), 'yyyy-MM-dd'),        to: format(endOfMonth(new Date()), 'yyyy-MM-dd') },
@@ -81,6 +83,15 @@ const Reports: React.FC = () => {
           <button className="btn btn-primary" onClick={fetchReport} disabled={loading} style={{ marginBottom: 1 }}>
             {loading ? 'Loading...' : <><BarChart3 size={16} /> Generate Report</>}
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowDateModal(true)}
+            style={{ marginBottom: 1 }}
+            title="Download invoices for selected date range as individual PDFs in a ZIP"
+          >
+            <Archive size={16} /> Download Invoices (ZIP)
+          </button>
         </div>
       </div>
 
@@ -137,6 +148,14 @@ const Reports: React.FC = () => {
           <p className="empty-state-title">Select a date range and generate a report</p>
         </div>
       )}
+
+      {/* Date-wise ZIP Download Modal */}
+      <DateWiseDownloadModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        initialFrom={from}
+        initialTo={to}
+      />
     </div>
   );
 };

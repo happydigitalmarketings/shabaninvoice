@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye, Edit } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Eye, Edit, Archive } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import DateWiseDownloadModal from '../components/invoice/DateWiseDownloadModal';
 
 interface InvoiceSummary {
   _id: string;
@@ -26,6 +27,9 @@ const Invoices: React.FC = () => {
   const [search, setSearch] = useState('');
   const [payStatus, setPayStatus] = useState('all');
   const [status, setStatus] = useState('issued');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [showDateModal, setShowDateModal] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -37,6 +41,8 @@ const Invoices: React.FC = () => {
         search:        search || undefined,
         paymentStatus: payStatus !== 'all' ? payStatus : undefined,
         status:        status   !== 'all' ? status   : undefined,
+        from:          fromDate || undefined,
+        to:            toDate   || undefined,
         page,
         limit,
       });
@@ -47,7 +53,7 @@ const Invoices: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, payStatus, status, page]);
+  }, [search, payStatus, status, fromDate, toDate, page]);
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
 
@@ -77,7 +83,15 @@ const Invoices: React.FC = () => {
           <h1 className="page-title">Invoices</h1>
           <p className="page-subtitle">{total} invoices found</p>
         </div>
-        <div className="page-actions">
+        <div className="page-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowDateModal(true)}
+            title="Download invoices for a date range as a ZIP file"
+          >
+            <Archive size={16} /> Download Date-wise (ZIP)
+          </button>
           <Link to="/invoices/new" className="btn btn-primary">
             <Plus size={16} /> New Invoice
           </Link>
@@ -98,7 +112,39 @@ const Invoices: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            {/* Date Filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input
+                type="date"
+                className="form-input"
+                style={{ width: 'auto', padding: '6px 8px', fontSize: 'var(--text-xs)' }}
+                value={fromDate}
+                onChange={e => { setFromDate(e.target.value); setPage(1); }}
+                title="From Date"
+              />
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>to</span>
+              <input
+                type="date"
+                className="form-input"
+                style={{ width: 'auto', padding: '6px 8px', fontSize: 'var(--text-xs)' }}
+                value={toDate}
+                onChange={e => { setToDate(e.target.value); setPage(1); }}
+                title="To Date"
+              />
+              {(fromDate || toDate) && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: '2px 6px', fontSize: '11px' }}
+                  onClick={() => { setFromDate(''); setToDate(''); setPage(1); }}
+                  title="Clear Date Filters"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
             <Filter size={14} color="var(--color-text-muted)" />
             <select
               id="invoice-filter-status"
@@ -199,6 +245,14 @@ const Invoices: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Date-wise ZIP Download Modal */}
+      <DateWiseDownloadModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        initialFrom={fromDate}
+        initialTo={toDate}
+      />
     </div>
   );
 };
