@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, Search, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Search, AlertTriangle, UploadCloud, FileText, X } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { productsApi } from '../api/products.api';
 import { customersApi } from '../api/customers.api';
@@ -62,6 +62,7 @@ const CreateInvoice: React.FC = () => {
   const [vehicleNo, setVehicleNo] = useState('');
   const [isInterState, setIsInterState] = useState(false);
   const [notes, setNotes]         = useState('');
+  const [attachedPdf, setAttachedPdf] = useState<File | null>(null);
 
   // Customer form (manual entry)
   const [custName, setCustName]     = useState('');
@@ -237,16 +238,31 @@ const CreateInvoice: React.FC = () => {
       const payload = buildPayload();
       if (isEdit && id) {
         await invoicesApi.update(id, payload);
+        if (attachedPdf) {
+          try {
+            await invoicesApi.uploadPdf(id, attachedPdf);
+          } catch {
+            toast.error('Invoice updated, but PDF upload failed');
+          }
+        }
         toast.success('Invoice updated!');
         navigate(`/invoices/${id}`);
       } else {
         const res = await invoicesApi.create(payload);
+        const newId = res.data._id;
+        if (attachedPdf) {
+          try {
+            await invoicesApi.uploadPdf(newId, attachedPdf);
+          } catch {
+            toast.error('Invoice created, but PDF upload failed');
+          }
+        }
         toast.success(asDraft ? 'Draft saved!' : 'Invoice created!');
         if (!asDraft) {
-          await invoicesApi.issue(res.data._id);
+          await invoicesApi.issue(newId);
           toast.success('Invoice issued!');
         }
-        navigate(`/invoices/${res.data._id}`);
+        navigate(`/invoices/${newId}`);
       }
     } catch (e: unknown) {
       toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Could not save invoice');
@@ -557,6 +573,93 @@ const CreateInvoice: React.FC = () => {
                 {amountToWords(totals.grandTotal)}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Attach Manual / Existing PDF */}
+        <div className="card">
+          <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <UploadCloud size={18} color="var(--color-primary)" />
+              Attach Existing / Manual PDF Invoice (Optional)
+            </h2>
+            {attachedPdf && (
+              <span className="badge badge-success" style={{ fontSize: '11px' }}>
+                PDF Selected
+              </span>
+            )}
+          </div>
+          <div style={{ padding: 'var(--space-4)' }}>
+            <p style={{ margin: '0 0 var(--space-3) 0', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+              If you already have a physical or manually created PDF for this invoice, upload it here to attach it directly to this invoice.
+            </p>
+            {attachedPdf ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  background: 'rgba(37, 99, 235, 0.08)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(37, 99, 235, 0.2)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FileText size={20} color="var(--color-primary)" />
+                  <div>
+                    <strong style={{ fontSize: 'var(--text-sm)' }}>{attachedPdf.name}</strong>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                      {(attachedPdf.size / 1024).toFixed(1)} KB — Will be attached upon saving
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--color-danger)' }}
+                  onClick={() => setAttachedPdf(null)}
+                >
+                  <X size={14} /> Remove
+                </button>
+              </div>
+            ) : (
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '14px 18px',
+                  border: '2px dashed var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  background: 'var(--color-bg-secondary)',
+                }}
+              >
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                      toast.error('Only PDF files are allowed');
+                      return;
+                    }
+                    if (file.size > 20 * 1024 * 1024) {
+                      toast.error('File size cannot exceed 20MB');
+                      return;
+                    }
+                    setAttachedPdf(file);
+                  }}
+                />
+                <UploadCloud size={20} color="var(--color-text-muted)" />
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+                  Click to select existing manual PDF invoice (Max 20MB)
+                </span>
+              </label>
+            )}
           </div>
         </div>
 

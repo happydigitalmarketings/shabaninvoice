@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip, UploadCloud } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import DateWiseDownloadModal from '../components/invoice/DateWiseDownloadModal';
+import UploadInvoicePdfModal from '../components/invoice/UploadInvoicePdfModal';
 
 interface InvoiceSummary {
   _id: string;
@@ -37,9 +38,18 @@ const Invoices: React.FC = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadInvoiceTargetId, setUploadInvoiceTargetId] = useState<string | undefined>(undefined);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const limit = 20;
+
+  const getPdfUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+    return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -91,6 +101,17 @@ const Invoices: React.FC = () => {
           <p className="page-subtitle">{total} invoices found</p>
         </div>
         <div className="page-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setUploadInvoiceTargetId(undefined);
+              setShowUploadModal(true);
+            }}
+            title="Upload and attach an existing PDF file to an invoice"
+          >
+            <UploadCloud size={16} /> Upload Invoice PDF
+          </button>
           <button
             type="button"
             className="btn btn-secondary"
@@ -237,7 +258,32 @@ const Invoices: React.FC = () => {
                     <td>{payBadge(inv.paymentStatus)}</td>
                     <td>{statusBadge(inv.status)}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {inv.pdfAttachment ? (
+                          <a
+                            href={getPdfUrl(inv.pdfAttachment.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--color-primary-light)', padding: '4px 8px' }}
+                            title={`View attached PDF (${inv.pdfAttachment.originalName})`}
+                          >
+                            <FileText size={14} /> PDF
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--color-primary-light)', padding: '4px 8px' }}
+                            onClick={() => {
+                              setUploadInvoiceTargetId(inv._id);
+                              setShowUploadModal(true);
+                            }}
+                            title="Upload & attach manual PDF to this invoice"
+                          >
+                            <UploadCloud size={14} /> Upload PDF
+                          </button>
+                        )}
                         <Link to={`/invoices/${inv._id}`} className="btn btn-ghost btn-sm" title="View / Print">
                           <Eye size={14} /> View
                         </Link>
@@ -274,6 +320,18 @@ const Invoices: React.FC = () => {
         initialFrom={fromDate}
         initialTo={toDate}
       />
+
+      {/* Upload & Attach PDF Modal */}
+      {showUploadModal && (
+        <UploadInvoicePdfModal
+          defaultInvoiceId={uploadInvoiceTargetId}
+          onClose={() => {
+            setShowUploadModal(false);
+            setUploadInvoiceTargetId(undefined);
+          }}
+          onSuccess={() => fetchInvoices()}
+        />
+      )}
     </div>
   );
 };
