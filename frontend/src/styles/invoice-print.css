@@ -67,9 +67,9 @@
   flex: 1;
   border-right: 1px solid var(--arafa-border-color);
   text-align: center;
-  padding: 6px 8px;
+  padding: 8px 10px 10px 10px;
   font-size: 8pt;
-  line-height: 1.35;
+  line-height: 1.45;
 }
 
 .arafa-seller-name {
@@ -101,8 +101,14 @@
 }
 
 .arafa-meta-cell {
-  padding: 4px 6px;
+  padding: 6px 8px 8px 8px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
   font-size: 8pt;
+  line-height: 1.35;
   border-right: 1px solid var(--arafa-border-color);
   border-bottom: 1px solid var(--arafa-border-color);
   box-sizing: border-box;
@@ -134,9 +140,9 @@
 .arafa-party-col {
   width: 50%;
   box-sizing: border-box;
-  padding: 6px 8px;
+  padding: 8px 10px 12px 10px;
   font-size: 8pt;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
 .arafa-party-col:first-child {
@@ -146,7 +152,7 @@
 .arafa-party-heading {
   font-weight: 700;
   font-size: 8.5pt;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 /* ── 4. Items Table (CSS Grid for 100% bug-free PDF and Print rendering) ── */

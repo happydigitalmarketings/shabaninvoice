@@ -152,7 +152,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             <span className="arafa-val font-bold">{invoiceNumber}</span>
           </div>
           <div className="arafa-meta-cell">
-            <span className="arafa-label">Invoice Date:</span><br />
+            <span className="arafa-label">Invoice Date:</span>
             <span className="arafa-val">{formattedDate}</span>
           </div>
           <div className="arafa-meta-cell">
@@ -165,7 +165,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
           </div>
 
           <div className="arafa-meta-cell">
-            <span className="arafa-label">State / State Code:</span><br />
+            <span className="arafa-label">State / State Code:</span>
             <span className="arafa-val">{sellerState} / {sellerStateCode}</span>
           </div>
           <div className="arafa-meta-cell">
