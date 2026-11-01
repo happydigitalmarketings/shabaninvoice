@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/invoice.controller');
 const { protect } = require('../middleware/auth.middleware');
+const { uploadInvoicePdf } = require('../middleware/upload.middleware');
 
 router.use(protect);
 
@@ -14,5 +15,7 @@ router.put('/:id',               ctrl.update);
 router.post('/:id/issue',        ctrl.issue);
 router.post('/:id/cancel',       ctrl.cancel);
 router.post('/:id/payments',     ctrl.addPayment);
+router.post('/:id/upload-pdf',   uploadInvoicePdf.single('pdf'), ctrl.uploadPdf);
+router.delete('/:id/pdf',        ctrl.deletePdf);
 
 module.exports = router;

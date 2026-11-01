@@ -1,4 +1,5 @@
 const Invoice = require('../models/Invoice');
+const fs      = require('fs');
 
 const DEFAULT_SELLER = {
   businessName: 'SHABAN TRADITIONAL FOODS',
@@ -212,4 +213,74 @@ const reportSummary = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getById, getByNumber, create, update, issue, cancel, addPayment, nextNumber, reportSummary };
+// POST /api/invoices/:id/upload-pdf
+const uploadPdf = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No PDF file uploaded' });
+    }
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      if (req.file.path && fs.existsSync(req.file.path)) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+      }
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    // Remove old file if exists
+    if (invoice.pdfAttachment && invoice.pdfAttachment.path && fs.existsSync(invoice.pdfAttachment.path)) {
+      try { fs.unlinkSync(invoice.pdfAttachment.path); } catch (e) { console.error('Failed to unlink old PDF', e); }
+    }
+
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const fileUrl = `${protocol}://${host}/uploads/invoices/${req.file.filename}`;
+
+    invoice.pdfAttachment = {
+      originalName: req.file.originalname,
+      filename:     req.file.filename,
+      path:         req.file.path,
+      url:          fileUrl,
+      size:         req.file.size,
+      uploadedAt:   new Date(),
+    };
+
+    await invoice.save();
+    res.json(invoice);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// DELETE /api/invoices/:id/pdf
+const deletePdf = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    if (invoice.pdfAttachment && invoice.pdfAttachment.path && fs.existsSync(invoice.pdfAttachment.path)) {
+      try { fs.unlinkSync(invoice.pdfAttachment.path); } catch (e) { console.error('Failed to remove PDF', e); }
+    }
+
+    invoice.pdfAttachment = undefined;
+    await invoice.save();
+    res.json(invoice);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getAll,
+  getById,
+  getByNumber,
+  create,
+  update,
+  issue,
+  cancel,
+  addPayment,
+  nextNumber,
+  reportSummary,
+  uploadPdf,
+  deletePdf,
+};

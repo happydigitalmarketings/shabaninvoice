@@ -49,6 +49,14 @@ export interface PaymentRecord {
 export type InvoiceStatus = 'draft' | 'issued' | 'cancelled';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
 
+export interface PdfAttachment {
+  originalName: string;
+  filename: string;
+  url: string;
+  size: number;
+  uploadedAt: string;
+}
+
 export interface Invoice {
   _id?: string;
   invoiceNumber: string;
@@ -89,6 +97,7 @@ export interface Invoice {
   cancelledAt?: string;
   cancellationReason?: string;
   notes?: string;
+  pdfAttachment?: PdfAttachment;
   createdAt?: string;
   updatedAt?: string;
 }

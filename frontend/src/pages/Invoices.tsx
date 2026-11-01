@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye, Edit, Archive } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
@@ -16,6 +16,13 @@ interface InvoiceSummary {
   paymentStatus: string;
   status: string;
   balanceDue: number;
+  pdfAttachment?: {
+    originalName: string;
+    filename: string;
+    url: string;
+    size: number;
+    uploadedAt: string;
+  };
 }
 
 const PAYMENT_STATUSES = ['all', 'unpaid', 'partial', 'paid'];
@@ -204,6 +211,20 @@ const Invoices: React.FC = () => {
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-primary-light)' }}>
                         {inv.invoiceNumber}
                       </span>
+                      {inv.pdfAttachment && (
+                        <span
+                          title={`PDF Attached: ${inv.pdfAttachment.originalName}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            marginLeft: '6px',
+                            color: 'var(--color-primary)',
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          <Paperclip size={13} />
+                        </span>
+                      )}
                     </td>
                     <td style={{ fontWeight: 500 }}>{inv.customer?.name || '—'}</td>
                     <td style={{ color: 'var(--color-text-secondary)' }}>

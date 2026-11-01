@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Uploads & Storage
+uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment & Build
+.env
+.env.local
+dist/
+dist-ssr/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+desktop.ini
+**/desktop.ini
+.vscode/
+.idea/

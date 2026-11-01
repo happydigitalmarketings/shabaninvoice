@@ -28,4 +28,14 @@ export const invoicesApi = {
 
   getReportSummary: (from: string, to: string) =>
     axiosClient.get('/invoices/reports/summary', { params: { from, to } }),
+
+  uploadPdf: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    return axiosClient.post(`/invoices/${id}/upload-pdf`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  deletePdf: (id: string) => axiosClient.delete(`/invoices/${id}/pdf`),
 };

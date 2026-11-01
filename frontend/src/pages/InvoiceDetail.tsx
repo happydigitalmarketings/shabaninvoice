@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Printer, Edit, CheckCircle, XCircle, IndianRupee, ArrowLeft } from 'lucide-react';
+import {
+  Printer,
+  Edit,
+  CheckCircle,
+  XCircle,
+  IndianRupee,
+  ArrowLeft,
+  UploadCloud,
+  FileText,
+  Download,
+  Trash2,
+  ExternalLink,
+} from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import type { Invoice } from '../types/invoice.types';
 import { formatINR } from '../utils/formatCurrency';
@@ -17,6 +29,9 @@ const InvoiceDetail: React.FC = () => {
   const [showPayModal, setShowPayModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [deletingPdf, setDeletingPdf] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -65,6 +80,55 @@ const InvoiceDetail: React.FC = () => {
     window.print();
   };
 
+  const handlePdfFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Only PDF files are allowed');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('File size cannot exceed 20MB');
+      return;
+    }
+    try {
+      setUploadingPdf(true);
+      const res = await invoicesApi.uploadPdf(id, file);
+      setInvoice(res.data);
+      toast.success('PDF invoice attached successfully!');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to upload PDF';
+      toast.error(msg);
+    } finally {
+      setUploadingPdf(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeletePdf = async () => {
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to delete the attached PDF?')) return;
+    try {
+      setDeletingPdf(true);
+      const res = await invoicesApi.deletePdf(id);
+      setInvoice(res.data);
+      toast.success('Attached PDF deleted');
+    } catch {
+      toast.error('Could not delete attached PDF');
+    } finally {
+      setDeletingPdf(false);
+    }
+  };
+
+  const getPdfDownloadUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+    return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="spinner spinner-lg" />
@@ -78,6 +142,15 @@ const InvoiceDetail: React.FC = () => {
 
   return (
     <div>
+      {/* Hidden PDF file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handlePdfFileSelect}
+        accept="application/pdf"
+        style={{ display: 'none' }}
+      />
+
       {/* Actions Bar */}
       <div className="page-header no-print">
         <div className="page-header-left">
@@ -93,6 +166,16 @@ const InvoiceDetail: React.FC = () => {
         </div>
 
         <div className="page-actions no-print">
+          {/* Upload / Replace PDF button */}
+          <button
+            className="btn btn-secondary"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingPdf}
+            title="Upload an existing PDF copy for this invoice"
+          >
+            <UploadCloud size={16} /> {uploadingPdf ? 'Uploading...' : invoice.pdfAttachment ? 'Replace PDF' : 'Upload PDF'}
+          </button>
+
           {invoice.status !== 'cancelled' && (
             <Link to={`/invoices/${id}/edit`} className="btn btn-secondary">
               <Edit size={16} /> Edit
@@ -122,6 +205,86 @@ const InvoiceDetail: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Uploaded PDF Attachment Card */}
+      {invoice.pdfAttachment && (
+        <div
+          className="no-print"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%)',
+            border: '1px solid rgba(37, 99, 235, 0.25)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 18px',
+            marginBottom: 'var(--space-4)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(37, 99, 235, 0.15)',
+                color: 'var(--color-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <FileText size={20} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>
+                  {invoice.pdfAttachment.originalName}
+                </strong>
+                <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 6px' }}>
+                  Uploaded PDF Attached
+                </span>
+              </div>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                {(invoice.pdfAttachment.size / 1024).toFixed(1)} KB • Uploaded on{' '}
+                {format(new Date(invoice.pdfAttachment.uploadedAt), 'dd MMM yyyy, hh:mm a')}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <a
+              href={getPdfDownloadUrl(invoice.pdfAttachment.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary btn-sm"
+              title="Open uploaded PDF in new tab"
+            >
+              <ExternalLink size={14} /> View PDF
+            </a>
+            <a
+              href={getPdfDownloadUrl(invoice.pdfAttachment.url)}
+              download={invoice.pdfAttachment.originalName}
+              className="btn btn-secondary btn-sm"
+              title="Download original uploaded PDF"
+            >
+              <Download size={14} /> Download
+            </a>
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--color-danger)' }}
+              onClick={handleDeletePdf}
+              disabled={deletingPdf}
+              title="Remove attached PDF"
+            >
+              <Trash2 size={14} /> {deletingPdf ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Invoice Preview */}
       <InvoicePreview invoice={invoice} />
