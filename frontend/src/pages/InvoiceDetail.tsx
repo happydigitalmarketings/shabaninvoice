@@ -12,12 +12,15 @@ import {
   Download,
   Trash2,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import type { Invoice } from '../types/invoice.types';
 import { formatINR } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import InvoicePreview from '../components/invoice/InvoicePreview';
 
 const InvoiceDetail: React.FC = () => {
@@ -32,7 +35,21 @@ const InvoiceDetail: React.FC = () => {
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [deletingPdf, setDeletingPdf] = useState(false);
   const [deletingInvoice, setDeletingInvoice] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getPdfFilename = () => {
+    let dateStr = 'date';
+    if (invoice?.invoiceDate) {
+      try {
+        dateStr = format(new Date(invoice.invoiceDate), 'dd-MM-yyyy');
+      } catch {
+        dateStr = (invoice.invoiceDate || '').split('T')[0];
+      }
+    }
+    const custName = (invoice?.customer?.name || 'Customer').trim();
+    return `${custName}- invoice  ${dateStr}.pdf`;
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -48,6 +65,16 @@ const InvoiceDetail: React.FC = () => {
       }
     })();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (invoice) {
+      const filename = getPdfFilename().replace(/\.pdf$/i, '');
+      document.title = filename;
+    }
+    return () => {
+      document.title = 'Shaban Foods Billing System';
+    };
+  }, [invoice]);
 
   const handleIssue = async () => {
     if (!id) return;
@@ -78,7 +105,62 @@ const InvoiceDetail: React.FC = () => {
   };
 
   const handlePrint = () => {
+    const filename = getPdfFilename().replace(/\.pdf$/i, '');
+    const oldTitle = document.title;
+    document.title = filename;
     window.print();
+    setTimeout(() => {
+      document.title = filename;
+    }, 1500);
+  };
+
+  const handleDownloadPdf = async () => {
+    const filename = getPdfFilename();
+
+    // If attached PDF exists, download directly
+    if (invoice?.pdfAttachment?.url) {
+      const link = document.createElement('a');
+      link.href = getPdfDownloadUrl(invoice.pdfAttachment.url);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Downloading ${filename}`);
+      return;
+    }
+
+    try {
+      setDownloadingPdf(true);
+      const sheet = document.querySelector('.arafa-invoice-sheet') as HTMLElement;
+      if (!sheet) {
+        handlePrint();
+        return;
+      }
+      await document.fonts.ready;
+      const canvas = await html2canvas(sheet, {
+        scale: 3,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      pdf.save(filename);
+      toast.success(`Saved as ${filename}`);
+    } catch (e) {
+      console.error(e);
+      handlePrint();
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   const handlePdfFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,7 +317,17 @@ const InvoiceDetail: React.FC = () => {
             <Trash2 size={16} /> {deletingInvoice ? 'Deleting...' : 'Delete'}
           </button>
 
-          <button className="btn btn-primary" onClick={handlePrint}>
+          <button
+            className="btn btn-secondary"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            title={`Download invoice as ${getPdfFilename()}`}
+          >
+            {downloadingPdf ? <Loader2 size={16} className="spinner" /> : <Download size={16} />}
+            {downloadingPdf ? 'Saving PDF...' : 'Download PDF'}
+          </button>
+
+          <button className="btn btn-primary" onClick={handlePrint} title={`Print or Save as PDF (${getPdfFilename()})`}>
             <Printer size={16} /> Print / PDF
           </button>
         </div>
@@ -302,9 +394,9 @@ const InvoiceDetail: React.FC = () => {
             </a>
             <a
               href={getPdfDownloadUrl(invoice.pdfAttachment.url)}
-              download={invoice.pdfAttachment.originalName}
+              download={getPdfFilename()}
               className="btn btn-secondary btn-sm"
-              title="Download original uploaded PDF"
+              title={`Download as ${getPdfFilename()}`}
             >
               <Download size={14} /> Download
             </a>

@@ -146,9 +146,15 @@ export const DateWiseDownloadModal: React.FC<DateWiseDownloadModalProps> = ({
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         const pdfBlob = pdf.output('blob');
 
-        // Safe filename with date: e.g. STF007_06-10-2026.pdf
-        const safeDate = (inv.invoiceDate || '').split('T')[0] || 'date';
-        const filename = `${invoiceNum}_${safeDate}.pdf`;
+        // Filename format: e.g. Harshi's Mart- invoice  01-11-2026.pdf
+        let formattedDate = 'date';
+        try {
+          formattedDate = format(new Date(inv.invoiceDate), 'dd-MM-yyyy');
+        } catch {
+          formattedDate = (inv.invoiceDate || '').split('T')[0];
+        }
+        const custName = (inv.customer?.name || 'Customer').trim();
+        const filename = `${custName}- invoice  ${formattedDate}.pdf`;
         zip.file(filename, pdfBlob);
       }
 

@@ -324,9 +324,10 @@ const Invoices: React.FC = () => {
                             href={getPdfUrl(inv.pdfAttachment.url)}
                             target="_blank"
                             rel="noopener noreferrer"
+                            download={`${(inv.customer?.name || 'Customer').trim()}- invoice  ${format(new Date(inv.invoiceDate), 'dd-MM-yyyy')}.pdf`}
                             className="btn btn-ghost btn-sm"
                             style={{ color: 'var(--color-primary-light)', padding: '4px 8px' }}
-                            title={`View attached PDF (${inv.pdfAttachment.originalName})`}
+                            title={`PDF (${(inv.customer?.name || 'Customer').trim()}- invoice  ${format(new Date(inv.invoiceDate), 'dd-MM-yyyy')}.pdf)`}
                           >
                             <FileText size={14} /> PDF
                           </a>

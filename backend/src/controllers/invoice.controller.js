@@ -377,6 +377,17 @@ const updateBranchesForExistingInvoices = async () => {
         inv.customer.branch = branchName;
         await inv.save();
       }
+
+      // 5. Ensure attached PDF name follows: [Customer Name]- invoice  [dd-MM-yyyy].pdf
+      if (inv.pdfAttachment && inv.customer?.name && inv.invoiceDate) {
+        const parts = inv.invoiceDate.split('T')[0].split('-');
+        const dateStr = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : inv.invoiceDate;
+        const targetName = `${inv.customer.name.trim()}- invoice  ${dateStr}.pdf`;
+        if (inv.pdfAttachment.originalName !== targetName) {
+          inv.pdfAttachment.originalName = targetName;
+          await inv.save();
+        }
+      }
     }
 
     // Also update Customer records if branch is missing or invalid
@@ -658,8 +669,16 @@ const uploadPdf = async (req, res) => {
     const protocol = req.protocol;
     const fileUrl = `${protocol}://${host}/uploads/invoices/${req.file.filename}`;
 
+    let formattedDate = 'date';
+    if (invoice.invoiceDate) {
+      const parts = invoice.invoiceDate.split('T')[0].split('-');
+      formattedDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : invoice.invoiceDate;
+    }
+    const custName = (invoice.customer?.name || 'Customer').trim();
+    const descriptiveName = `${custName}- invoice  ${formattedDate}.pdf`;
+
     invoice.pdfAttachment = {
-      originalName: req.file.originalname,
+      originalName: descriptiveName,
       filename:     req.file.filename,
       path:         req.file.path,
       url:          fileUrl,
@@ -820,6 +839,13 @@ const createWithPdf = async (req, res) => {
       }
     }
 
+    let formattedPdfDate = 'date';
+    if (finalDate) {
+      const parts = finalDate.split('T')[0].split('-');
+      formattedPdfDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : finalDate;
+    }
+    const descriptivePdfName = `${finalCustName.trim()}- invoice  ${formattedPdfDate}.pdf`;
+
     const invoiceData = {
       invoiceNumber: finalInvoiceNumber,
       invoiceDate: finalDate,
@@ -855,7 +881,7 @@ const createWithPdf = async (req, res) => {
       status: status || 'issued',
       notes: notes || 'Uploaded PDF invoice',
       pdfAttachment: {
-        originalName: req.file.originalname,
+        originalName: descriptivePdfName,
         filename: req.file.filename,
         path: req.file.path,
         url: fileUrl,
