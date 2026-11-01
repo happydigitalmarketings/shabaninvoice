@@ -1,0 +1,360 @@
+/* =============================================
+   INVOICE PRINT & SCREEN STYLES (Arafa Store Format)
+   ============================================= */
+
+:root {
+  --arafa-border-color: #000000;
+  --arafa-text-color: #000000;
+}
+
+/* ── Screen Container ── */
+.invoice-print-area {
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto 30px auto;
+  padding: 8mm 10mm;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+/* Outer Border Box */
+.arafa-invoice-box {
+  border: 1px solid var(--arafa-border-color);
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* ── 1. Top Header ── */
+.arafa-header-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--arafa-border-color);
+}
+
+.arafa-brand-col {
+  width: 24%;
+  border-right: 1px solid var(--arafa-border-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8px 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.arafa-brand-title {
+  font-size: 11pt;
+  line-height: 1.2;
+}
+
+.arafa-brand-sub {
+  font-size: 9pt;
+  line-height: 1.2;
+}
+
+.arafa-seller-col {
+  flex: 1;
+  border-right: 1px solid var(--arafa-border-color);
+  text-align: center;
+  padding: 6px 8px;
+  font-size: 8pt;
+  line-height: 1.35;
+}
+
+.arafa-seller-name {
+  font-size: 11pt;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.arafa-tax-col {
+  width: 22%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8px 6px;
+}
+
+.arafa-tax-title {
+  font-size: 11pt;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+/* ── 2. Meta Grid ── */
+.arafa-meta-grid {
+  display: grid;
+  grid-template-columns: 28% 24% 24% 24%;
+  border-bottom: 1px solid var(--arafa-border-color);
+}
+
+.arafa-meta-cell {
+  padding: 4px 6px;
+  font-size: 8pt;
+  border-right: 1px solid var(--arafa-border-color);
+  border-bottom: 1px solid var(--arafa-border-color);
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+.arafa-meta-cell:nth-child(4n) {
+  border-right: none;
+}
+
+.arafa-meta-cell:nth-child(n+5) {
+  border-bottom: none;
+}
+
+.arafa-label {
+  font-weight: 700;
+}
+
+.arafa-val {
+  font-weight: 400;
+}
+
+/* ── 3. Party Details (Receiver & Consignee) ── */
+.arafa-party-grid {
+  display: flex;
+  border-bottom: 1px solid var(--arafa-border-color);
+}
+
+.arafa-party-col {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-size: 8pt;
+  line-height: 1.4;
+}
+
+.arafa-party-col:first-child {
+  border-right: 1px solid var(--arafa-border-color);
+}
+
+.arafa-party-heading {
+  font-weight: 700;
+  font-size: 8.5pt;
+  margin-bottom: 4px;
+}
+
+/* ── 4. Items Table ── */
+.arafa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8pt;
+}
+
+.arafa-table th,
+.arafa-table td {
+  border: 1px solid var(--arafa-border-color);
+  padding: 4px 5px;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.arafa-table th {
+  background: #ffffff;
+  font-weight: 700;
+  text-align: center;
+  font-size: 8pt;
+  line-height: 1.2;
+}
+
+.arafa-table td {
+  font-size: 8pt;
+}
+
+.arafa-table .text-left { text-align: left; }
+.arafa-table .text-center { text-align: center; }
+.arafa-table .text-right { text-align: right; }
+
+.arafa-table .font-bold {
+  font-weight: 700;
+}
+
+.arafa-table tfoot td {
+  font-size: 8pt;
+}
+
+/* ── 5. Bottom Summary Container ── */
+.arafa-bottom-grid {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--arafa-border-color);
+}
+
+.arafa-bottom-left {
+  width: 58%;
+  border-right: 1px solid var(--arafa-border-color);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.arafa-bottom-right {
+  width: 42%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+/* Amount in words */
+.arafa-words-section {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--arafa-border-color);
+}
+
+.arafa-section-header {
+  font-weight: 700;
+  font-size: 8pt;
+  margin-bottom: 3px;
+}
+
+.arafa-words-text {
+  font-weight: 700;
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+
+/* Bank Details + QR */
+.arafa-bank-section {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--arafa-border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.arafa-bank-info {
+  flex: 1;
+  font-size: 8pt;
+  line-height: 1.45;
+}
+
+.arafa-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+/* Terms and Conditions */
+.arafa-terms-section {
+  padding: 6px 8px;
+  flex: 1;
+  font-size: 8pt;
+  line-height: 1.45;
+}
+
+.arafa-terms-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+/* Right side totals */
+.arafa-totals-section {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--arafa-border-color);
+  font-size: 8.5pt;
+  line-height: 1.5;
+}
+
+.arafa-totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.arafa-totals-divider {
+  text-align: right;
+  letter-spacing: -1px;
+  color: #333;
+  margin: 2px 0;
+  font-weight: bold;
+}
+
+/* Signature & Disclaimer */
+.arafa-sign-section {
+  padding: 6px 10px;
+  font-size: 8pt;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.arafa-sign-company {
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.arafa-sign-space {
+  height: 45px;
+}
+
+.arafa-sign-disclaimer {
+  font-size: 7.5pt;
+  color: #111;
+  text-align: left;
+}
+
+/* Bottom centered message */
+.arafa-thank-you {
+  text-align: center;
+  padding: 6px 0;
+  font-weight: 700;
+  font-size: 8.5pt;
+}
+
+/* ── Print Styles ── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .invoice-print-area,
+  .invoice-print-area * {
+    visibility: visible;
+  }
+
+  .invoice-print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .no-print,
+  .sidebar,
+  .header,
+  .mobile-nav,
+  .btn-print,
+  .page-actions,
+  .page-header {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+}

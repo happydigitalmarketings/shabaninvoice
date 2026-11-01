@@ -1,0 +1,16 @@
+{
+  "name": "Shaban Traditional Foods Billing",
+  "short_name": "STF Billing",
+  "description": "Invoice & Billing Management for Shaban Traditional Foods",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#c8521a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "finance"],
+  "screenshots": []
+}

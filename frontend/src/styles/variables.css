@@ -1,0 +1,104 @@
+/* =============================================
+   SHABAN TRADITIONAL FOODS — Design Tokens
+   ============================================= */
+
+:root {
+  /* Brand Colors */
+  --color-primary: #c8521a;        /* warm spice orange */
+  --color-primary-dark: #a63e10;
+  --color-primary-light: #f0824a;
+  --color-primary-50: #fff3ee;
+  --color-primary-100: #fde0cc;
+
+  --color-secondary: #2d6a4f;      /* deep forest green */
+  --color-secondary-dark: #1b4332;
+  --color-secondary-light: #40916c;
+  --color-secondary-50: #ecf7f1;
+
+  --color-accent: #f4a261;         /* golden amber */
+  --color-accent-dark: #e76f51;
+
+  /* Neutrals */
+  --color-bg: #0f1117;
+  --color-bg-card: #1a1d27;
+  --color-bg-elevated: #22263a;
+  --color-bg-input: #1e2235;
+  --color-bg-hover: #2a2f45;
+  --color-border: #2e3350;
+  --color-border-subtle: #252840;
+
+  /* Text */
+  --color-text-primary: #f0f2ff;
+  --color-text-secondary: #9ea8c5;
+  --color-text-muted: #5e6a8a;
+  --color-text-inverse: #0f1117;
+
+  /* Status Colors */
+  --color-success: #22c55e;
+  --color-success-bg: #052e16;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #1c1300;
+  --color-error: #ef4444;
+  --color-error-bg: #1c0606;
+  --color-info: #3b82f6;
+  --color-info-bg: #0a1628;
+
+  /* Payment Status */
+  --color-unpaid: #ef4444;
+  --color-partial: #f59e0b;
+  --color-paid: #22c55e;
+  --color-draft: #9ea8c5;
+
+  /* Typography */
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px rgba(200,82,26,0.15);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 70px;
+  --header-height: 60px;
+  --mobile-nav-height: 60px;
+}
