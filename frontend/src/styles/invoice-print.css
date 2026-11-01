@@ -329,11 +329,21 @@
   line-height: 1.5;
 }
 
+.font-bold {
+  font-weight: 700 !important;
+}
+
 .arafa-totals-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2px;
+}
+
+.arafa-totals-row.font-bold,
+.arafa-totals-row.font-bold span,
+.arafa-totals-row.font-bold strong {
+  font-weight: 700 !important;
 }
 
 .arafa-totals-divider {

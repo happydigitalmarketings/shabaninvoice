@@ -218,49 +218,58 @@ const CreateInvoice: React.FC = () => {
 
   const totals = calculateInvoiceTotals(items);
 
-  const buildPayload = () => ({
-    ...(invNumber ? { invoiceNumber: invNumber } : {}),
-    branch: custBranch,
-    invoiceDate,
-    paymentTerms,
-    reverseCharge,
-    eWayBillNumber: eWayBill,
-    vehicleNumber:  vehicleNo,
-    isInterState,
-    placeOfSupply:  custState,
-    seller: {
-      businessName: 'SHABAN TRADITIONAL FOODS',
-      address: {
-        line1: '44,Sengottaiah Colony',
-        line2: 'Saradha Mill Road, Sundarapuram',
-        city: 'Coimbatore',
-        state: 'Tamil Nadu',
-        stateCode: '33',
-        pincode: '641024',
-      },
-      mobile: '9585949146',
-      email: 'shabantrendsofficial@gmail.com',
-      gstin: '33BBFPA5813G1Z7',
-      state: 'TamilNadu',
-      stateCode: '33',
-    },
-    customerId:     selectedCust?._id,
-    customer: {
-      name:   custName,
+  const buildPayload = () => {
+    const isPaid = paymentTerms.toLowerCase() === 'paid';
+    return {
+      ...(invNumber ? { invoiceNumber: invNumber } : {}),
       branch: custBranch,
-      gstin:  custGstin,
-      phone:  custPhone,
-      state: custState,
-      stateCode: custStateCode,
-      billingAddress: { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode },
-      shippingAddress: sameAsBlling
-        ? { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode }
-        : undefined,
-    },
-    items: items.map(it => ({ ...it })),
-    ...totals,
-    amountInWords: amountToWords(totals.grandTotal),
-  });
+      invoiceDate,
+      paymentTerms,
+      ...(isPaid ? {
+        paymentStatus: 'paid',
+        amountPaid: totals.grandTotal,
+        balanceDue: 0,
+      } : {}),
+      reverseCharge,
+      eWayBillNumber: eWayBill,
+      vehicleNumber:  vehicleNo,
+      isInterState,
+      placeOfSupply:  custState,
+      seller: {
+        businessName: 'SHABAN TRADITIONAL FOODS',
+        address: {
+          line1: '44,Sengottaiah Colony',
+          line2: 'Saradha Mill Road, Sundarapuram',
+          city: 'Coimbatore',
+          state: 'Tamil Nadu',
+          stateCode: '33',
+          pincode: '641024',
+        },
+        mobile: '9585949146',
+        email: 'shabantrendsofficial@gmail.com',
+        gstin: '33BBFPA5813G1Z7',
+        state: 'TamilNadu',
+        stateCode: '33',
+      },
+      customerId:     selectedCust?._id,
+      customer: {
+        name:   custName,
+        branch: custBranch,
+        gstin:  custGstin,
+        phone:  custPhone,
+        state: custState,
+        stateCode: custStateCode,
+        billingAddress: { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode },
+        shippingAddress: sameAsBlling
+          ? { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode }
+          : undefined,
+      },
+      items: items.map(it => ({ ...it })),
+      ...totals,
+      ...(isPaid ? { amountPaid: totals.grandTotal, balanceDue: 0 } : {}),
+      amountInWords: amountToWords(totals.grandTotal),
+    };
+  };
 
   const validate = () => {
     if (!custName.trim())    { toast.error('Customer name is required'); return false; }
@@ -482,6 +491,7 @@ const CreateInvoice: React.FC = () => {
               <label className="form-label">Payment Terms</label>
               <select className="form-select" value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}>
                 <option value="Credit">Credit</option>
+                <option value="Paid">Paid</option>
                 <option value="Immediate">Immediate</option>
                 <option value="Due on Receipt">Due on Receipt</option>
                 <option value="Cash">Cash</option>

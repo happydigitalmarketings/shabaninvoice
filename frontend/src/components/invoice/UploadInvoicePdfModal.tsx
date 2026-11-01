@@ -525,9 +525,14 @@ const UploadInvoicePdfModal: React.FC<UploadInvoicePdfModalProps> = ({
                   <select
                     className="form-select"
                     value={paymentTerms}
-                    onChange={(e) => setPaymentTerms(e.target.value)}
+                    onChange={(e) => {
+                      const term = e.target.value;
+                      setPaymentTerms(term);
+                      if (term.toLowerCase() === 'paid') setPayStatus('paid');
+                    }}
                   >
                     <option value="Credit">Credit</option>
+                    <option value="Paid">Paid</option>
                     <option value="Immediate">Immediate</option>
                     <option value="Due on Receipt">Due on Receipt</option>
                     <option value="Cash">Cash</option>

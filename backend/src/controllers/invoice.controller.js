@@ -510,6 +510,13 @@ const create = async (req, res) => {
       if (!req.body.customer) req.body.customer = {};
       req.body.customer.branch = branchName;
     }
+    if (req.body.paymentTerms && req.body.paymentTerms.toLowerCase() === 'paid') {
+      req.body.paymentStatus = 'paid';
+      if (req.body.grandTotal !== undefined && !req.body.amountPaid) {
+        req.body.amountPaid = req.body.grandTotal;
+        req.body.balanceDue = 0;
+      }
+    }
     const invoice = await Invoice.create(req.body);
     res.status(201).json(invoice);
   } catch (err) {
@@ -530,7 +537,12 @@ const update = async (req, res) => {
       req.body.customer.branch = branchName;
     }
 
-    if (req.body.grandTotal !== undefined) {
+    if (req.body.paymentTerms && req.body.paymentTerms.toLowerCase() === 'paid') {
+      req.body.paymentStatus = 'paid';
+      const gt = req.body.grandTotal !== undefined ? Number(req.body.grandTotal) : existing.grandTotal;
+      req.body.amountPaid = gt;
+      req.body.balanceDue = 0;
+    } else if (req.body.grandTotal !== undefined) {
       const amountPaid = existing.amountPaid || 0;
       req.body.balanceDue = Math.max(0, Number(req.body.grandTotal) - amountPaid);
       if (req.body.balanceDue === 0 && req.body.grandTotal > 0) {

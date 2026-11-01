@@ -358,17 +358,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
                 </div>
               )}
               <div className="arafa-totals-divider">------------------</div>
-              <div className="arafa-totals-row">
-                <span>Total Tax Amount</span>
-                <span className="font-bold">₹{totalTax.toFixed(2)}</span>
+              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700 }}>
+                <strong>Total Tax Amount</strong>
+                <strong className="font-bold">₹{totalTax.toFixed(2)}</strong>
               </div>
-              <div className="arafa-totals-row font-bold">
-                <span>Final Invoice Amount</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt', marginTop: '2px' }}>
+                <strong>Final Invoice Amount</strong>
+                <strong className="font-bold">₹{grandTotal.toFixed(2)}</strong>
               </div>
-              <div className="arafa-totals-row font-bold">
-                <span>Balance Due</span>
-                <span>₹{(balanceDue !== undefined ? balanceDue : grandTotal).toFixed(2)}</span>
+              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt' }}>
+                <strong>Balance Due</strong>
+                <strong className="font-bold">₹{(balanceDue !== undefined ? balanceDue : grandTotal).toFixed(2)}</strong>
               </div>
             </div>
 
