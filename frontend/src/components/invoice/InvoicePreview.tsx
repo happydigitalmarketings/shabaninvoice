@@ -56,9 +56,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
     ? `${seller.address.city || 'Coimbatore'}, ${seller.address.state || 'Tamil Nadu'} - ${seller.address.pincode || '641024'}`
     : DEFAULT_SELLER.addressLine2;
   const sellerMobile = seller?.mobile || DEFAULT_SELLER.mobile;
-  const sellerEmail  = seller?.email  || DEFAULT_SELLER.email;
-  const sellerGstin  = seller?.gstin  || DEFAULT_SELLER.gstin;
-  const sellerState  = seller?.state  || DEFAULT_SELLER.state;
+  const sellerEmail = seller?.email || DEFAULT_SELLER.email;
+  const sellerGstin = seller?.gstin || DEFAULT_SELLER.gstin;
+  const sellerState = seller?.state || DEFAULT_SELLER.state;
   const sellerStateCode = seller?.stateCode || DEFAULT_SELLER.stateCode;
 
   // Receiver / Consignee details
@@ -340,37 +340,33 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             <div className="arafa-totals-section">
               <div className="arafa-totals-row">
                 <span>Total Amount Before Tax</span>
-                <span className="font-bold">₹{numSubTotal.toFixed(2)}</span>
+                <span>₹{numSubTotal.toFixed(2)}</span>
               </div>
               {!isInterState ? (
                 <>
                   <div className="arafa-totals-row" style={{ marginTop: '4px' }}>
                     <span>Add: CGST</span>
-                    <span className="font-bold">₹{numTotalCgst.toFixed(2)}</span>
+                    <span>₹{numTotalCgst.toFixed(2)}</span>
                   </div>
                   <div className="arafa-totals-row">
                     <span>Add: SGST</span>
-                    <span className="font-bold">₹{numTotalSgst.toFixed(2)}</span>
+                    <span>₹{numTotalSgst.toFixed(2)}</span>
                   </div>
                 </>
               ) : (
                 <div className="arafa-totals-row" style={{ marginTop: '4px' }}>
                   <span>Add: IGST</span>
-                  <span className="font-bold">₹{numTotalIgst.toFixed(2)}</span>
+                  <span>₹{numTotalIgst.toFixed(2)}</span>
                 </div>
               )}
               <div className="arafa-totals-divider">------------------</div>
-              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700 }}>
-                <strong>Total Tax Amount</strong>
-                <strong className="font-bold">₹{numTotalTax.toFixed(2)}</strong>
+              <div className="arafa-totals-row font-bold">
+                <span>Total Tax Amount</span>
+                <span>₹{numTotalTax.toFixed(2)}</span>
               </div>
-              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt', marginTop: '2px' }}>
+              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9.5pt', marginTop: '3px' }}>
                 <strong>Final Invoice Amount</strong>
                 <strong className="font-bold">₹{numGrandTotal.toFixed(2)}</strong>
-              </div>
-              <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt' }}>
-                <strong>Balance Due</strong>
-                <strong className="font-bold">₹{numBalanceDue.toFixed(2)}</strong>
               </div>
             </div>
 
