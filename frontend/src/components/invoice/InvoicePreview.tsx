@@ -251,7 +251,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             >
               <div className="arafa-grid-cell text-center">{item.srNo ?? i + 1}</div>
               <div className="arafa-grid-cell text-left">{item.productName}</div>
-              <div className="arafa-grid-cell text-center">{item.hsnSac}</div>
+              <div className="arafa-grid-cell text-center">{(item.hsnSac === '1902' || !item.hsnSac) ? '19023010' : item.hsnSac}</div>
               <div className="arafa-grid-cell text-center">{item.quantity}</div>
               <div className="arafa-grid-cell text-center">{item.unit || 'PCS'}</div>
               <div className="arafa-grid-cell text-center">{(Number(item.unitRate) || 0).toFixed(2)}</div>

@@ -3,6 +3,12 @@ const Product = require('../models/Product');
 // GET /api/products
 const getAll = async (req, res) => {
   try {
+    // Auto-migrate legacy '1902' HSN codes to '19023010'
+    await Product.updateMany(
+      { $or: [{ hsnSac: '1902' }, { hsnSac: '' }, { hsnSac: null }, { hsnSac: { $exists: false } }] },
+      { $set: { hsnSac: '19023010' } }
+    );
+
     const { search } = req.query;
     const query = search
       ? { $or: [{ name: new RegExp(search, 'i') }, { hsnSac: new RegExp(search, 'i') }] }

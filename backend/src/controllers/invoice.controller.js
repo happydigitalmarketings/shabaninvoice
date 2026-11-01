@@ -388,6 +388,20 @@ const updateBranchesForExistingInvoices = async () => {
           await inv.save();
         }
       }
+
+      // 6. Ensure all items have HSN/SAC 19023010
+      if (inv.items && inv.items.length > 0) {
+        let itemsChanged = false;
+        for (const it of inv.items) {
+          if (it.hsnSac === '1902' || !it.hsnSac) {
+            it.hsnSac = '19023010';
+            itemsChanged = true;
+          }
+        }
+        if (itemsChanged) {
+          await inv.save();
+        }
+      }
     }
 
     // Also update Customer records if branch is missing or invalid
@@ -500,6 +514,19 @@ const getById = async (req, res) => {
       await invoice.save();
     }
 
+    if (invoice.items && invoice.items.length > 0) {
+      let itemsChanged = false;
+      for (const it of invoice.items) {
+        if (it.hsnSac === '1902' || !it.hsnSac) {
+          it.hsnSac = '19023010';
+          itemsChanged = true;
+        }
+      }
+      if (itemsChanged) {
+        await invoice.save();
+      }
+    }
+
     res.json(invoice);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -515,6 +542,13 @@ const create = async (req, res) => {
     if (!req.body.seller || !req.body.seller.businessName) {
       req.body.seller = DEFAULT_SELLER;
     }
+    // Normalize items HSN/SAC
+    if (req.body.items && Array.isArray(req.body.items)) {
+      req.body.items.forEach(it => {
+        if (it.hsnSac === '1902' || !it.hsnSac) it.hsnSac = '19023010';
+      });
+    }
+
     const branchName = req.body.branch || req.body.customer?.branch;
     if (branchName) {
       req.body.branch = branchName;
@@ -552,6 +586,13 @@ const update = async (req, res) => {
           req.body.invoiceDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         }
       }
+    }
+
+    // Normalize items HSN/SAC
+    if (req.body.items && Array.isArray(req.body.items)) {
+      req.body.items.forEach(it => {
+        if (it.hsnSac === '1902' || !it.hsnSac) it.hsnSac = '19023010';
+      });
     }
 
     const branchName = req.body.branch || req.body.customer?.branch;
@@ -836,6 +877,7 @@ const createWithPdf = async (req, res) => {
         {
           srNo: 1,
           productName: 'Invoice as per attached PDF',
+          hsnSac: '19023010',
           quantity: 1,
           unit: 'NOS',
           unitRate: total,
@@ -846,6 +888,10 @@ const createWithPdf = async (req, res) => {
           totalAmount: total,
         },
       ];
+    } else {
+      parsedItems.forEach(it => {
+        if (it.hsnSac === '1902' || !it.hsnSac) it.hsnSac = '19023010';
+      });
     }
 
     // Upsert customer if not existing

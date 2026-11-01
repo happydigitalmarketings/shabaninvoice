@@ -144,7 +144,7 @@ const CreateInvoice: React.FC = () => {
         setItems(inv.items.map((it: InvoiceItem, idx: number) => ({
           ...it,
           srNo: it.srNo ?? idx + 1,
-          hsnSac: (it.hsnSac || '').trim() || '19023010',
+          hsnSac: ((it.hsnSac || '').trim() === '1902' || !(it.hsnSac || '').trim()) ? '19023010' : it.hsnSac.trim(),
         })));
       } else {
         setItems([{ ...emptyItem() }]);
@@ -198,7 +198,7 @@ const CreateInvoice: React.FC = () => {
         ...updated[index],
         productId: product._id,
         productName: product.name,
-        hsnSac: product.hsnSac || '19023010',
+        hsnSac: product.hsnSac === '1902' || !product.hsnSac ? '19023010' : product.hsnSac,
         unit: product.unit,
         unitRate: product.unitPrice,
         cgstRate: product.cgstRate,
@@ -276,7 +276,7 @@ const CreateInvoice: React.FC = () => {
       },
       items: items.map(it => ({
         ...it,
-        hsnSac: (it.hsnSac || '').trim() || '19023010',
+        hsnSac: ((it.hsnSac || '').trim() === '1902' || !(it.hsnSac || '').trim()) ? '19023010' : it.hsnSac.trim(),
       })),
       ...totals,
       ...(isPaid ? { amountPaid: totals.grandTotal, balanceDue: 0 } : {}),

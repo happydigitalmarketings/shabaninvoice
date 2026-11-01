@@ -26,7 +26,11 @@ const Products: React.FC = () => {
     setLoading(true);
     try {
       const res = await productsApi.getAll(search || undefined);
-      setProducts(res.data || []);
+      const list = (res.data || []).map((p: Product) => ({
+        ...p,
+        hsnSac: p.hsnSac === '1902' || !p.hsnSac ? '19023010' : p.hsnSac,
+      }));
+      setProducts(list);
     } catch { toast.error('Could not load products'); }
     finally { setLoading(false); }
   }, [search]);
@@ -34,7 +38,14 @@ const Products: React.FC = () => {
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setShowModal(true); };
-  const openEdit = (p: Product) => { setEditing(p); setForm({ ...p }); setShowModal(true); };
+  const openEdit = (p: Product) => {
+    setEditing(p);
+    setForm({
+      ...p,
+      hsnSac: p.hsnSac === '1902' || !p.hsnSac ? '19023010' : p.hsnSac,
+    });
+    setShowModal(true);
+  };
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Product name is required'); return; }
@@ -101,7 +112,7 @@ const Products: React.FC = () => {
 
       {/* Note about GST rates */}
       <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3) var(--space-4)', marginBottom: 'var(--space-4)', fontSize: 'var(--text-sm)', color: '#60a5fa' }}>
-        ℹ️ <strong>Default tax rate:</strong> HSN 1902 (Noodles/Pasta) — 5% GST = 2.5% CGST + 2.5% SGST. Verify with your CA before issuing invoices. Rates are editable per product.
+        ℹ️ <strong>Default tax rate:</strong> HSN 19023010 (Noodles/Pasta) — 5% GST = 2.5% CGST + 2.5% SGST. Verify with your CA before issuing invoices. Rates are editable per product.
       </div>
 
       {/* Table */}
