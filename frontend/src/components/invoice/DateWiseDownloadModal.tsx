@@ -140,10 +140,13 @@ export const DateWiseDownloadModal: React.FC<DateWiseDownloadModalProps> = ({
           format: 'a4',
           compress: true,
         });
-        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 6;
+        const pdfWidth = pageWidth - (margin * 2);
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+        pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, Math.min(pdfHeight, pageHeight - (margin * 2)), undefined, 'FAST');
         const pdfBlob = pdf.output('blob');
 
         // Filename format: e.g. Harshi's Mart- invoice  01-11-2026.pdf

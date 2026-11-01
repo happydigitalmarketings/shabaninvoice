@@ -105,12 +105,18 @@ const invoiceSchema = new mongoose.Schema(
     cancellationReason:  { type: String },
     notes:               { type: String },
     pdfAttachment: {
-      originalName: { type: String },
-      filename:     { type: String },
-      path:         { type: String },
-      url:          { type: String },
-      size:         { type: Number },
-      uploadedAt:   { type: Date },
+      type: new mongoose.Schema(
+        {
+          originalName: { type: String },
+          filename:     { type: String },
+          path:         { type: String },
+          url:          { type: String },
+          size:         { type: Number },
+          uploadedAt:   { type: Date },
+        },
+        { _id: false }
+      ),
+      default: undefined,
     },
   },
   { timestamps: true }

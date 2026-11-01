@@ -109,32 +109,80 @@ const InvoiceDetail: React.FC = () => {
   const handleDownloadPdf = async () => {
     const filename = getPdfFilename();
 
-    // If attached PDF exists, download directly
+    // If attached PDF file exists, download via blob
     if (invoice?.pdfAttachment?.url) {
-      const link = document.createElement('a');
-      link.href = getPdfDownloadUrl(invoice.pdfAttachment.url);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success(`Downloading ${filename}`);
-      return;
+      try {
+        setDownloadingPdf(true);
+        const fullUrl = getPdfDownloadUrl(invoice.pdfAttachment.url);
+        const res = await fetch(fullUrl);
+        if (!res.ok) throw new Error('File not accessible');
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+        toast.success(`Downloaded ${filename}`);
+        return;
+      } catch (err) {
+        console.warn('Fallback to opening URL:', err);
+        window.open(getPdfDownloadUrl(invoice.pdfAttachment.url), '_blank');
+        return;
+      } finally {
+        setDownloadingPdf(false);
+      }
     }
 
+    // Otherwise, generate high-resolution PDF from digital invoice preview
     try {
       setDownloadingPdf(true);
-      const sheet = document.querySelector('.arafa-invoice-sheet') as HTMLElement;
-      if (!sheet) {
+      const originalSheet = (document.getElementById('invoice-preview') || document.querySelector('.invoice-print-area')) as HTMLElement;
+      if (!originalSheet) {
         handlePrint();
         return;
       }
       await document.fonts.ready;
-      const canvas = await html2canvas(sheet, {
-        scale: 3,
+
+      // Clone into offscreen container with exact fixed A4 width (794px)
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '794px';
+      container.style.background = '#ffffff';
+      container.style.margin = '0';
+      container.style.padding = '0';
+      container.style.zIndex = '-9999';
+
+      const clone = originalSheet.cloneNode(true) as HTMLElement;
+      clone.style.width = '794px';
+      clone.style.maxWidth = '794px';
+      clone.style.minWidth = '794px';
+      clone.style.margin = '0';
+      clone.style.padding = '8mm 10mm';
+      clone.style.boxSizing = 'border-box';
+      clone.style.boxShadow = 'none';
+
+      container.appendChild(clone);
+      document.body.appendChild(container);
+
+      // Brief delay to allow cloned DOM styles and SVG QR code to settle
+      await new Promise(r => setTimeout(r, 80));
+
+      const canvas = await html2canvas(clone, {
+        scale: 2.5,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794,
       });
+
+      document.body.removeChild(container);
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'p',
@@ -142,9 +190,23 @@ const InvoiceDetail: React.FC = () => {
         format: 'a4',
         compress: true,
       });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
+
+      const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const margin = 6; // 6mm margin on all sides
+      const pdfWidth = pageWidth - (margin * 2); // 198mm
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+
+      pdf.addImage(
+        imgData,
+        'PNG',
+        margin,
+        margin,
+        pdfWidth,
+        Math.min(pdfHeight, pageHeight - (margin * 2)),
+        undefined,
+        'FAST'
+      );
       pdf.save(filename);
       toast.success(`Saved as ${filename}`);
     } catch (e) {
@@ -326,7 +388,7 @@ const InvoiceDetail: React.FC = () => {
       </div>
 
       {/* Uploaded PDF Attachment Card */}
-      {invoice.pdfAttachment && (
+      {invoice.pdfAttachment?.url && (
         <div
           className="no-print"
           style={{
@@ -384,14 +446,13 @@ const InvoiceDetail: React.FC = () => {
             >
               <ExternalLink size={14} /> View PDF
             </a>
-            <a
-              href={getPdfDownloadUrl(invoice.pdfAttachment.url)}
-              download={getPdfFilename()}
+            <button
+              onClick={handleDownloadPdf}
               className="btn btn-secondary btn-sm"
               title={`Download as ${getPdfFilename()}`}
             >
               <Download size={14} /> Download
-            </a>
+            </button>
             <button
               className="btn btn-ghost btn-sm"
               style={{ color: 'var(--color-danger)' }}

@@ -174,28 +174,28 @@
   border-bottom: none;
 }
 
-/* Intra-state 12 columns */
+/* Intra-state 12 columns: balanced so numbers and codes never wrap awkwardly */
 .arafa-row-intra {
-  grid-template-columns: 4% 25% 10% 5% 5% 7% 9% 6% 7% 6% 7% 9%;
+  grid-template-columns: 4% 22% 11% 5.5% 5.5% 7% 9.5% 5.5% 7.5% 5.5% 7.5% 9.5%;
 }
 
 /* Inter-state 10 columns */
 .arafa-row-inter {
-  grid-template-columns: 4% 25% 10% 5% 5% 7% 9% 13% 13% 9%;
+  grid-template-columns: 4% 24% 12% 6% 6% 8% 11% 8% 10% 11%;
 }
 
 .arafa-grid-cell {
   border-right: 1px solid var(--arafa-border-color);
-  padding: 6px 4px;
-  font-size: 8pt;
-  line-height: 1.35;
+  padding: 5px 2px;
+  font-size: 7.5pt;
+  line-height: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   box-sizing: border-box;
   overflow: hidden;
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 .arafa-grid-cell:last-child {
@@ -205,22 +205,28 @@
 /* Header Cells */
 .arafa-grid-header {
   font-weight: 700;
+  font-size: 7.5pt;
   text-align: center;
   justify-content: center;
-  line-height: 1.25;
+  line-height: 1.15;
+  white-space: normal;
+  padding: 4px 1px;
 }
 
 .arafa-grid-header.text-left {
   justify-content: flex-start;
   text-align: left;
-  padding-left: 8px;
+  padding-left: 6px;
 }
 
 /* Cell Alignments */
 .arafa-grid-cell.text-left {
   justify-content: flex-start;
   text-align: left;
-  padding-left: 8px;
+  padding-left: 6px;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .arafa-grid-cell.text-center {

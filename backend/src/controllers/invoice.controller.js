@@ -378,8 +378,11 @@ const updateBranchesForExistingInvoices = async () => {
         await inv.save();
       }
 
-      // 5. Ensure attached PDF name follows: [Customer Name]- invoice  [dd-MM-yyyy].pdf
-      if (inv.pdfAttachment && inv.customer?.name && inv.invoiceDate) {
+      // 5. Clean up invalid pdfAttachment or ensure attached PDF name follows: [Customer Name]- invoice  [dd-MM-yyyy].pdf
+      if (inv.pdfAttachment && (!inv.pdfAttachment.filename || !inv.pdfAttachment.url)) {
+        inv.pdfAttachment = undefined;
+        await inv.save();
+      } else if (inv.pdfAttachment && inv.customer?.name && inv.invoiceDate) {
         const parts = inv.invoiceDate.split('T')[0].split('-');
         const dateStr = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : inv.invoiceDate;
         const targetName = `${inv.customer.name.trim()}- invoice  ${dateStr}.pdf`;
@@ -620,7 +623,7 @@ const update = async (req, res) => {
     }
 
     // Preserve existing pdfAttachment if not explicitly passed in req.body
-    if (existing.pdfAttachment && !req.body.pdfAttachment) {
+    if (existing.pdfAttachment && existing.pdfAttachment.filename && existing.pdfAttachment.url && !req.body.pdfAttachment) {
       const finalDate = req.body.invoiceDate || existing.invoiceDate;
       const finalCustName = req.body.customer?.name || existing.customer?.name || 'Customer';
       let formattedDate = 'date';
@@ -634,6 +637,8 @@ const update = async (req, res) => {
         ...attObj,
         originalName: descriptiveName,
       };
+    } else if (!req.body.pdfAttachment && (!existing.pdfAttachment || !existing.pdfAttachment.filename || !existing.pdfAttachment.url)) {
+      req.body.$unset = { pdfAttachment: 1 };
     }
 
     const invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: false });

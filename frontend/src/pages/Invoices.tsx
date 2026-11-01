@@ -57,6 +57,28 @@ const Invoices: React.FC = () => {
     return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  const handleDownloadAttachment = async (inv: InvoiceSummary) => {
+    if (!inv.pdfAttachment?.url) return;
+    const filename = formatInvoicePdfName(inv.customer?.name, inv.invoiceDate);
+    const fullUrl = getPdfUrl(inv.pdfAttachment.url);
+    try {
+      const res = await fetch(fullUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+      toast.success(`Downloaded ${filename}`);
+    } catch {
+      window.open(fullUrl, '_blank');
+    }
+  };
+
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
     try {
@@ -319,18 +341,16 @@ const Invoices: React.FC = () => {
                     <td>{statusBadge(inv.status)}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        {inv.pdfAttachment ? (
-                          <a
-                            href={getPdfUrl(inv.pdfAttachment.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={formatInvoicePdfName(inv.customer?.name, inv.invoiceDate)}
+                        {inv.pdfAttachment?.url ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadAttachment(inv)}
                             className="btn btn-ghost btn-sm"
                             style={{ color: 'var(--color-primary-light)', padding: '4px 8px' }}
-                            title={`PDF (${formatInvoicePdfName(inv.customer?.name, inv.invoiceDate)})`}
+                            title={`Download PDF (${formatInvoicePdfName(inv.customer?.name, inv.invoiceDate)})`}
                           >
                             <FileText size={14} /> PDF
-                          </a>
+                          </button>
                         ) : (
                           <button
                             type="button"

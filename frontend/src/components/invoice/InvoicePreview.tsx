@@ -220,24 +220,24 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
         <div className="arafa-grid-table">
           {/* Header Row */}
           <div className={`arafa-grid-row ${!isInterState ? 'arafa-row-intra' : 'arafa-row-inter'}`}>
-            <div className="arafa-grid-cell arafa-grid-header">Sl.<br />No.</div>
+            <div className="arafa-grid-cell arafa-grid-header">Sl.</div>
             <div className="arafa-grid-cell arafa-grid-header text-left">Name of Product</div>
             <div className="arafa-grid-cell arafa-grid-header">HSN/SAC</div>
             <div className="arafa-grid-cell arafa-grid-header">Qty</div>
             <div className="arafa-grid-cell arafa-grid-header">Unit</div>
             <div className="arafa-grid-cell arafa-grid-header">Rate</div>
-            <div className="arafa-grid-cell arafa-grid-header">Taxable<br />Value</div>
+            <div className="arafa-grid-cell arafa-grid-header">Taxable<br />Amt</div>
             {!isInterState ? (
               <>
-                <div className="arafa-grid-cell arafa-grid-header">CGST<br />Rate</div>
-                <div className="arafa-grid-cell arafa-grid-header">CGST<br />Amount</div>
-                <div className="arafa-grid-cell arafa-grid-header">SGST<br />Rate</div>
-                <div className="arafa-grid-cell arafa-grid-header">SGST<br />Amount</div>
+                <div className="arafa-grid-cell arafa-grid-header">CGST<br />%</div>
+                <div className="arafa-grid-cell arafa-grid-header">CGST<br />Amt</div>
+                <div className="arafa-grid-cell arafa-grid-header">SGST<br />%</div>
+                <div className="arafa-grid-cell arafa-grid-header">SGST<br />Amt</div>
               </>
             ) : (
               <>
-                <div className="arafa-grid-cell arafa-grid-header">IGST<br />Rate</div>
-                <div className="arafa-grid-cell arafa-grid-header">IGST<br />Amount</div>
+                <div className="arafa-grid-cell arafa-grid-header">IGST<br />%</div>
+                <div className="arafa-grid-cell arafa-grid-header">IGST<br />Amt</div>
               </>
             )}
             <div className="arafa-grid-cell arafa-grid-header">Total</div>
