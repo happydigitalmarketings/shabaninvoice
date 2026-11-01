@@ -116,26 +116,34 @@ export const DateWiseDownloadModal: React.FC<DateWiseDownloadModalProps> = ({
         // Set the active invoice for the offscreen render container
         setRenderInvoice(inv);
 
-        // Allow React DOM and SVG QR code to render completely
-        await new Promise(resolve => setTimeout(resolve, 150));
+        // Allow React DOM, web fonts, and SVG QR code to render completely
+        await document.fonts.ready;
+        await new Promise(resolve => setTimeout(resolve, 180));
 
         const renderEl = document.getElementById('datewise-invoice-render');
         if (!renderEl) continue;
 
-        // Capture high-resolution canvas
+        // Capture high-resolution canvas at scale: 3 (300+ DPI print quality)
         const canvas = await html2canvas(renderEl, {
-          scale: 2,
+          scale: 3,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
+          windowWidth: 794,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
+        // Use lossless PNG to eliminate JPEG compression artifacts and text blur
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'p',
+          unit: 'mm',
+          format: 'a4',
+          compress: true,
+        });
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         const pdfBlob = pdf.output('blob');
 
         // Safe filename with date: e.g. STF007_06-10-2026.pdf
@@ -351,21 +359,22 @@ export const DateWiseDownloadModal: React.FC<DateWiseDownloadModalProps> = ({
         </div>
       </div>
 
-      {/* ── Offscreen Render Container for Crisp HTML2Canvas PDF Generation ── */}
+      {/* ── Render Container for Crisp High-Res PDF Generation ── */}
       <div
         id="offscreen-invoice-container"
         style={{
           position: 'fixed',
-          left: '-9999px',
           top: 0,
-          width: '794px', // 210mm at 96 DPI
+          left: 0,
+          width: '794px',
           background: '#ffffff',
-          visibility: renderInvoice ? 'visible' : 'hidden',
-          zIndex: -999,
+          pointerEvents: 'none',
+          opacity: 0,
+          zIndex: -9999,
         }}
       >
         {renderInvoice && (
-          <div id="datewise-invoice-render">
+          <div id="datewise-invoice-render" style={{ width: '794px', background: '#ffffff' }}>
             <InvoicePreview invoice={renderInvoice} />
           </div>
         )}

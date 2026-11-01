@@ -12,6 +12,9 @@
   background: #ffffff;
   color: #000000;
   font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   font-size: 8.5pt;
   line-height: 1.35;
   width: 100%;
@@ -149,13 +152,19 @@
 /* ── 4. Items Table ── */
 .arafa-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 8pt;
+  border-top: 1px solid var(--arafa-border-color);
+  border-left: 1px solid var(--arafa-border-color);
 }
 
 .arafa-table th,
 .arafa-table td {
-  border: 1px solid var(--arafa-border-color);
+  border-right: 1px solid var(--arafa-border-color);
+  border-bottom: 1px solid var(--arafa-border-color);
+  border-top: none;
+  border-left: none;
   padding: 4px 5px;
   vertical-align: middle;
   box-sizing: border-box;
