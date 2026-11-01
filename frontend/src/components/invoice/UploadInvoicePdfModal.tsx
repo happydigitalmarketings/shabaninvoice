@@ -498,7 +498,7 @@ const UploadInvoicePdfModal: React.FC<UploadInvoicePdfModalProps> = ({
                     className="form-input"
                     placeholder="Phone number"
                     value={custPhone}
-                    onChange={(e) => setNewCustPhone(e.target.value)}
+                    onChange={(e) => setCustPhone(e.target.value)}
                   />
                 </div>
               </div>

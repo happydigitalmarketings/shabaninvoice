@@ -18,6 +18,7 @@ import Customers     from './pages/Customers';
 import Products      from './pages/Products';
 import Reports       from './pages/Reports';
 import Settings      from './pages/Settings';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 import './styles/global.css';
 
@@ -54,18 +55,20 @@ const AppShell: React.FC = () => {
         <Header title={PAGE_TITLES[title] || 'Dashboard'} onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="page-body">
-          <Routes>
-            <Route path="/"               element={<Dashboard />} />
-            <Route path="/invoices"       element={<Invoices />} />
-            <Route path="/invoices/new"   element={<CreateInvoice />} />
-            <Route path="/invoices/:id"   element={<InvoiceDetail />} />
-            <Route path="/invoices/:id/edit" element={<CreateInvoice />} />
-            <Route path="/customers"      element={<Customers />} />
-            <Route path="/products"       element={<Products />} />
-            <Route path="/reports"        element={<Reports />} />
-            <Route path="/settings"       element={<Settings />} />
-            <Route path="*"              element={<Navigate to="/" replace />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/"               element={<Dashboard />} />
+              <Route path="/invoices"       element={<Invoices />} />
+              <Route path="/invoices/new"   element={<CreateInvoice />} />
+              <Route path="/invoices/:id"   element={<InvoiceDetail />} />
+              <Route path="/invoices/:id/edit" element={<CreateInvoice />} />
+              <Route path="/customers"      element={<Customers />} />
+              <Route path="/products"       element={<Products />} />
+              <Route path="/reports"        element={<Reports />} />
+              <Route path="/settings"       element={<Settings />} />
+              <Route path="*"              element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
 
         <MobileNav />

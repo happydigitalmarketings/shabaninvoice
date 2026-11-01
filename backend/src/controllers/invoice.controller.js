@@ -541,6 +541,19 @@ const update = async (req, res) => {
     const existing = await Invoice.findById(req.params.id);
     if (!existing) return res.status(404).json({ message: 'Invoice not found' });
 
+    // Normalize invoiceDate if provided
+    if (req.body.invoiceDate) {
+      const s = String(req.body.invoiceDate).trim().split('T')[0];
+      const parts = s.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          req.body.invoiceDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        } else if (parts[2].length === 4) {
+          req.body.invoiceDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+    }
+
     const branchName = req.body.branch || req.body.customer?.branch;
     if (branchName) {
       req.body.branch = branchName;
@@ -564,6 +577,24 @@ const update = async (req, res) => {
         req.body.paymentStatus = 'unpaid';
       }
     }
+
+    // Preserve existing pdfAttachment if not explicitly passed in req.body
+    if (existing.pdfAttachment && !req.body.pdfAttachment) {
+      const finalDate = req.body.invoiceDate || existing.invoiceDate;
+      const finalCustName = req.body.customer?.name || existing.customer?.name || 'Customer';
+      let formattedDate = 'date';
+      if (finalDate) {
+        const parts = finalDate.split('T')[0].split('-');
+        formattedDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : finalDate;
+      }
+      const descriptiveName = `${finalCustName.trim()}- invoice  ${formattedDate}.pdf`;
+      const attObj = existing.pdfAttachment.toObject ? existing.pdfAttachment.toObject() : existing.pdfAttachment;
+      req.body.pdfAttachment = {
+        ...attObj,
+        originalName: descriptiveName,
+      };
+    }
+
     const invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: false });
     res.json(invoice);
   } catch (err) {

@@ -7,19 +7,19 @@ import toast from 'react-hot-toast';
 import { formatCurrency } from '../utils/formatCurrency';
 
 const emptyForm = (): Omit<Product, '_id' | 'createdAt' | 'updatedAt'> => ({
-  name: '', hsnSac: '1902', unit: 'PKT', unitPrice: 0,
+  name: '', hsnSac: '19023010', unit: 'PKT', unitPrice: 0,
   cgstRate: 2.5, sgstRate: 2.5, igstRate: 5,
   description: '', isActive: true,
 });
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch]     = useState('');
-  const [loading, setLoading]   = useState(true);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing]   = useState<Product | null>(null);
-  const [form, setForm]         = useState(emptyForm());
-  const [saving, setSaving]     = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState(emptyForm());
+  const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -37,7 +37,7 @@ const Products: React.FC = () => {
   const openEdit = (p: Product) => { setEditing(p); setForm({ ...p }); setShowModal(true); };
 
   const handleSave = async () => {
-    if (!form.name.trim())   { toast.error('Product name is required'); return; }
+    if (!form.name.trim()) { toast.error('Product name is required'); return; }
     if (!form.hsnSac.trim()) { toast.error('HSN/SAC code is required'); return; }
     try {
       setSaving(true);
@@ -185,7 +185,7 @@ const Products: React.FC = () => {
               <div className="form-grid form-grid-2">
                 <div className="form-group">
                   <label className="form-label">HSN / SAC Code <span className="required">*</span></label>
-                  <input className="form-input" value={form.hsnSac} onChange={e => setField('hsnSac', e.target.value)} placeholder="1902" />
+                  <input className="form-input" value={form.hsnSac} onChange={e => setField('hsnSac', e.target.value)} placeholder="19023010" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Unit</label>

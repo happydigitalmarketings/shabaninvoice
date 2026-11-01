@@ -11,6 +11,7 @@ import { calculateLineItem, calculateInvoiceTotals } from '../utils/gst.utils';
 import { amountToWords } from '../utils/numberToWords';
 import { formatINR } from '../utils/formatCurrency';
 import { format } from 'date-fns';
+import { toIsoDate } from '../utils/date.utils';
 import toast from 'react-hot-toast';
 
 const INDIAN_STATES = [
@@ -34,19 +35,19 @@ const INDIAN_STATES = [
 ];
 
 const emptyItem = (): InvoiceItem => ({
-  srNo: 1, productName: '', hsnSac: '', quantity: 1, unit: 'BOX',
+  srNo: 1, productName: '', hsnSac: '19023010', quantity: 1, unit: 'BOX',
   unitRate: 0, taxableAmount: 0, cgstRate: 2.5, cgstAmount: 0,
   sgstRate: 2.5, sgstAmount: 0, igstRate: 5, igstAmount: 0, totalAmount: 0,
 });
 
 const CreateInvoice: React.FC = () => {
-  const navigate  = useNavigate();
-  const { id }    = useParams<{ id?: string }>(); // for edit mode
-  const isEdit    = Boolean(id);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>(); // for edit mode
+  const isEdit = Boolean(id);
 
   // Customer
-  const [customers, setCustomers]       = useState<Customer[]>([]);
-  const [custSearch, setCustSearch]     = useState('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [custSearch, setCustSearch] = useState('');
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
   const [showCustDrop, setShowCustDrop] = useState(false);
 
@@ -58,22 +59,22 @@ const CreateInvoice: React.FC = () => {
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentTerms, setPaymentTerms] = useState('Credit');
   const [reverseCharge, setReverseCharge] = useState(false);
-  const [eWayBill, setEWayBill]   = useState('');
+  const [eWayBill, setEWayBill] = useState('');
   const [vehicleNo, setVehicleNo] = useState('');
   const [isInterState, setIsInterState] = useState(false);
-  const [notes, setNotes]         = useState('');
+  const [notes, setNotes] = useState('');
   const [attachedPdf, setAttachedPdf] = useState<File | null>(null);
 
   // Customer form (manual entry)
-  const [custName, setCustName]     = useState('');
+  const [custName, setCustName] = useState('');
   const [custBranch, setCustBranch] = useState('');
-  const [custGstin, setCustGstin]   = useState('');
-  const [custPhone, setCustPhone]   = useState('');
-  const [custState, setCustState]   = useState('Tamil Nadu');
+  const [custGstin, setCustGstin] = useState('');
+  const [custPhone, setCustPhone] = useState('');
+  const [custState, setCustState] = useState('Tamil Nadu');
   const [custStateCode, setCustStateCode] = useState('33');
-  const [billLine1, setBillLine1]   = useState('');
-  const [billLine2, setBillLine2]   = useState('');
-  const [billCity, setBillCity]     = useState('');
+  const [billLine1, setBillLine1] = useState('');
+  const [billLine2, setBillLine2] = useState('');
+  const [billCity, setBillCity] = useState('');
   const [billPincode, setBillPincode] = useState('');
   const [sameAsBlling, setSameAsBilling] = useState(true);
 
@@ -85,13 +86,13 @@ const CreateInvoice: React.FC = () => {
   const [savingDraft, setSavingDraft] = useState(false);
 
   useEffect(() => {
-    productsApi.getAll().then(r => setProducts(r.data || [])).catch(() => {});
+    productsApi.getAll().then(r => setProducts(r.data || [])).catch(() => { });
   }, []);
 
   // Search customers
   useEffect(() => {
     if (!custSearch) { setCustomers([]); return; }
-    customersApi.getAll(custSearch).then(r => setCustomers(r.data || [])).catch(() => {});
+    customersApi.getAll(custSearch).then(r => setCustomers(r.data || [])).catch(() => { });
   }, [custSearch]);
 
   // Auto-fetch next invoice number for new invoice
@@ -99,7 +100,7 @@ const CreateInvoice: React.FC = () => {
     if (!id) {
       invoicesApi.getNextNumber().then(res => {
         if (res.data?.number) setInvNumber(res.data.number);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [id]);
 
@@ -119,7 +120,7 @@ const CreateInvoice: React.FC = () => {
         else b = '';
       }
       setCustBranch(b);
-      setInvoiceDate(inv.invoiceDate?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'));
+      setInvoiceDate(toIsoDate(inv.invoiceDate) || format(new Date(), 'yyyy-MM-dd'));
       setPaymentTerms(inv.paymentTerms || 'Credit');
       setReverseCharge(inv.reverseCharge || false);
       setEWayBill(inv.eWayBillNumber || '');
@@ -139,7 +140,15 @@ const CreateInvoice: React.FC = () => {
         setBillCity(ba.city || '');
         setBillPincode(ba.pincode || '');
       }
-      setItems(inv.items || [{ ...emptyItem() }]);
+      if (Array.isArray(inv.items) && inv.items.length > 0) {
+        setItems(inv.items.map((it: InvoiceItem, idx: number) => ({
+          ...it,
+          srNo: it.srNo ?? idx + 1,
+          hsnSac: (it.hsnSac || '').trim() || '19023010',
+        })));
+      } else {
+        setItems([{ ...emptyItem() }]);
+      }
     }).catch(() => toast.error('Could not load invoice'));
   }, [id]);
 
@@ -187,14 +196,14 @@ const CreateInvoice: React.FC = () => {
       const updated = [...prev];
       const item: InvoiceItem = {
         ...updated[index],
-        productId:   product._id,
+        productId: product._id,
         productName: product.name,
-        hsnSac:      product.hsnSac,
-        unit:        product.unit,
-        unitRate:    product.unitPrice,
-        cgstRate:    product.cgstRate,
-        sgstRate:    product.sgstRate,
-        igstRate:    product.igstRate,
+        hsnSac: product.hsnSac || '19023010',
+        unit: product.unit,
+        unitRate: product.unitPrice,
+        cgstRate: product.cgstRate,
+        sgstRate: product.sgstRate,
+        igstRate: product.igstRate,
       };
       updated[index] = calculateLineItem(item, isInterState) as InvoiceItem;
       return updated;
@@ -203,7 +212,7 @@ const CreateInvoice: React.FC = () => {
 
   const addRow = () => setItems(prev => [
     ...prev,
-    { ...emptyItem(), srNo: prev.length + 1 },
+    { ...emptyItem(), srNo: prev.length + 1, hsnSac: '19023010' },
   ]);
 
   const removeRow = (i: number) => {
@@ -220,10 +229,11 @@ const CreateInvoice: React.FC = () => {
 
   const buildPayload = () => {
     const isPaid = paymentTerms.toLowerCase() === 'paid';
+    const finalDate = toIsoDate(invoiceDate) || format(new Date(), 'yyyy-MM-dd');
     return {
       ...(invNumber ? { invoiceNumber: invNumber } : {}),
       branch: custBranch,
-      invoiceDate,
+      invoiceDate: finalDate,
       paymentTerms,
       ...(isPaid ? {
         paymentStatus: 'paid',
@@ -232,9 +242,9 @@ const CreateInvoice: React.FC = () => {
       } : {}),
       reverseCharge,
       eWayBillNumber: eWayBill,
-      vehicleNumber:  vehicleNo,
+      vehicleNumber: vehicleNo,
       isInterState,
-      placeOfSupply:  custState,
+      placeOfSupply: custState,
       seller: {
         businessName: 'SHABAN TRADITIONAL FOODS',
         address: {
@@ -251,12 +261,12 @@ const CreateInvoice: React.FC = () => {
         state: 'TamilNadu',
         stateCode: '33',
       },
-      customerId:     selectedCust?._id,
+      customerId: selectedCust?._id,
       customer: {
-        name:   custName,
+        name: custName,
         branch: custBranch,
-        gstin:  custGstin,
-        phone:  custPhone,
+        gstin: custGstin,
+        phone: custPhone,
         state: custState,
         stateCode: custStateCode,
         billingAddress: { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode },
@@ -264,7 +274,10 @@ const CreateInvoice: React.FC = () => {
           ? { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode }
           : undefined,
       },
-      items: items.map(it => ({ ...it })),
+      items: items.map(it => ({
+        ...it,
+        hsnSac: (it.hsnSac || '').trim() || '19023010',
+      })),
       ...totals,
       ...(isPaid ? { amountPaid: totals.grandTotal, balanceDue: 0 } : {}),
       amountInWords: amountToWords(totals.grandTotal),
@@ -272,12 +285,17 @@ const CreateInvoice: React.FC = () => {
   };
 
   const validate = () => {
-    if (!custName.trim())    { toast.error('Customer name is required'); return false; }
-    if (items.some(it => !it.productName.trim())) { toast.error('All items need a product name'); return false; }
-    if (items.some(it => it.quantity <= 0))        { toast.error('Quantity must be > 0'); return false; }
-    if (items.some(it => it.unitRate <= 0))        { toast.error('Unit rate must be > 0'); return false; }
-    if (items.some(it => !it.hsnSac.trim()))       { toast.error('HSN/SAC code is required for all items'); return false; }
-    return true;
+    try {
+      if (!custName?.trim()) { toast.error('Customer name is required'); return false; }
+      if (!items || items.length === 0) { toast.error('Please add at least one item'); return false; }
+      if (items.some(it => !(it.productName || '').trim())) { toast.error('All items need a product name'); return false; }
+      if (items.some(it => Number(it.quantity) <= 0)) { toast.error('Quantity must be > 0'); return false; }
+      if (items.some(it => Number(it.unitRate) <= 0)) { toast.error('Unit rate must be > 0'); return false; }
+      return true;
+    } catch (e) {
+      console.error('Validation error:', e);
+      return false;
+    }
   };
 
   const handleSave = async (asDraft = false) => {
@@ -364,8 +382,8 @@ const CreateInvoice: React.FC = () => {
                     borderBottom: '1px solid var(--color-border-subtle)',
                     transition: 'background var(--transition-fast)',
                   }}
-                  onMouseOver={e => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                    onMouseOver={e => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <div style={{ fontWeight: 600 }}>{c.name}</div>
                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
@@ -581,7 +599,7 @@ const CreateInvoice: React.FC = () => {
 
                     <td>
                       <input className="form-input" style={{ fontSize: 'var(--text-xs)', padding: '6px 8px' }}
-                        value={item.hsnSac} onChange={e => updateItem(i, 'hsnSac', e.target.value)} placeholder="1902" />
+                        value={item.hsnSac} onChange={e => updateItem(i, 'hsnSac', e.target.value)} placeholder="19023010" />
                     </td>
                     <td>
                       <input type="number" className="form-input" style={{ fontSize: 'var(--text-xs)', padding: '6px 8px' }}
@@ -590,7 +608,7 @@ const CreateInvoice: React.FC = () => {
                     <td>
                       <select className="form-select" style={{ fontSize: 'var(--text-xs)', padding: '6px 8px' }}
                         value={item.unit} onChange={e => updateItem(i, 'unit', e.target.value)}>
-                        {['BOX','KG','G','PCS','PKT','SET','LTR','NOS'].map(u => <option key={u}>{u}</option>)}
+                        {['BOX', 'KG', 'G', 'PCS', 'PKT', 'SET', 'LTR', 'NOS'].map(u => <option key={u}>{u}</option>)}
                       </select>
                     </td>
                     <td>

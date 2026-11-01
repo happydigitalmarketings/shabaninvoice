@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip, UploadCloud, Trash2 } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
-import { format } from 'date-fns';
+import { safeFormatDate, formatInvoicePdfName } from '../utils/date.utils';
 import toast from 'react-hot-toast';
 import DateWiseDownloadModal from '../components/invoice/DateWiseDownloadModal';
 import UploadInvoicePdfModal from '../components/invoice/UploadInvoicePdfModal';
@@ -309,7 +309,7 @@ const Invoices: React.FC = () => {
                         )}
                       </td>
                     <td style={{ color: 'var(--color-text-secondary)' }}>
-                      {format(new Date(inv.invoiceDate), 'dd MMM yyyy')}
+                      {safeFormatDate(inv.invoiceDate, 'dd MMM yyyy')}
                     </td>
                     <td style={{ fontWeight: 600 }}>{formatCurrency(inv.grandTotal)}</td>
                     <td style={{ color: inv.balanceDue > 0 ? 'var(--color-warning)' : 'var(--color-success)' }}>
@@ -324,10 +324,10 @@ const Invoices: React.FC = () => {
                             href={getPdfUrl(inv.pdfAttachment.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            download={`${(inv.customer?.name || 'Customer').trim()}- invoice  ${format(new Date(inv.invoiceDate), 'dd-MM-yyyy')}.pdf`}
+                            download={formatInvoicePdfName(inv.customer?.name, inv.invoiceDate)}
                             className="btn btn-ghost btn-sm"
                             style={{ color: 'var(--color-primary-light)', padding: '4px 8px' }}
-                            title={`PDF (${(inv.customer?.name || 'Customer').trim()}- invoice  ${format(new Date(inv.invoiceDate), 'dd-MM-yyyy')}.pdf)`}
+                            title={`PDF (${formatInvoicePdfName(inv.customer?.name, inv.invoiceDate)})`}
                           >
                             <FileText size={14} /> PDF
                           </a>

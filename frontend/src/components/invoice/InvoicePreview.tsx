@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Invoice } from '../../types/invoice.types';
-import { format } from 'date-fns';
+import { safeFormatDate } from '../../utils/date.utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { amountToWords } from '../../utils/numberToWords';
 import '../../styles/invoice-print.css';
@@ -45,14 +45,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
     status, notes,
   } = invoice;
 
-  let formattedDate = '—';
-  if (invoiceDate) {
-    try {
-      formattedDate = format(new Date(invoiceDate), 'dd-MM-yyyy');
-    } catch {
-      formattedDate = invoiceDate;
-    }
-  }
+  const formattedDate = safeFormatDate(invoiceDate, 'dd-MM-yyyy', invoiceDate || '—');
 
   // Seller details with complete fallbacks
   const sellerName = seller?.businessName || DEFAULT_SELLER.businessName;
@@ -100,13 +93,22 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
     (invoiceNumber === 'STF007' || invoiceNumber === 'STF008' ? 'Karumbukkadai' : '');
 
   // Sum of quantities
-  const totalQty = items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+  const safeItems = Array.isArray(items) ? items : [];
+  const totalQty = safeItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+
+  const numSubTotal = Number(subTotal) || 0;
+  const numTotalCgst = Number(totalCgst) || 0;
+  const numTotalSgst = Number(totalSgst) || 0;
+  const numTotalIgst = Number(totalIgst) || 0;
+  const numTotalTax = Number(totalTax) || (numTotalCgst + numTotalSgst + numTotalIgst);
+  const numGrandTotal = Number(grandTotal) || 0;
+  const numBalanceDue = balanceDue !== undefined && balanceDue !== null ? Number(balanceDue) : numGrandTotal;
 
   // Exact words
-  const wordsDisplay = amountToWords(grandTotal);
+  const wordsDisplay = amountToWords(numGrandTotal);
 
   // Current balance due or grand total for UPI QR
-  const upiDue = balanceDue !== undefined ? balanceDue : grandTotal;
+  const upiDue = numBalanceDue;
   const upiPaymentUrl = `upi://pay?pa=${DEFAULT_BANK.upiId}&pn=${encodeURIComponent(sellerName)}&am=${upiDue.toFixed(2)}&cu=INR`;
 
   return (
@@ -277,21 +279,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             <div className="arafa-grid-cell text-center font-bold">{totalQty}</div>
             <div className="arafa-grid-cell"></div>
             <div className="arafa-grid-cell"></div>
-            <div className="arafa-grid-cell text-center font-bold">₹{subTotal.toFixed(2)}</div>
+            <div className="arafa-grid-cell text-center font-bold">₹{numSubTotal.toFixed(2)}</div>
             {!isInterState ? (
               <>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-center font-bold">₹{totalCgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{numTotalCgst.toFixed(2)}</div>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-center font-bold">₹{totalSgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{numTotalSgst.toFixed(2)}</div>
               </>
             ) : (
               <>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-center font-bold">₹{totalIgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{numTotalIgst.toFixed(2)}</div>
               </>
             )}
-            <div className="arafa-grid-cell text-center font-bold">₹{grandTotal.toFixed(2)}</div>
+            <div className="arafa-grid-cell text-center font-bold">₹{numGrandTotal.toFixed(2)}</div>
           </div>
         </div>
 
@@ -338,37 +340,37 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             <div className="arafa-totals-section">
               <div className="arafa-totals-row">
                 <span>Total Amount Before Tax</span>
-                <span className="font-bold">₹{subTotal.toFixed(2)}</span>
+                <span className="font-bold">₹{numSubTotal.toFixed(2)}</span>
               </div>
               {!isInterState ? (
                 <>
                   <div className="arafa-totals-row" style={{ marginTop: '4px' }}>
                     <span>Add: CGST</span>
-                    <span className="font-bold">₹{totalCgst.toFixed(2)}</span>
+                    <span className="font-bold">₹{numTotalCgst.toFixed(2)}</span>
                   </div>
                   <div className="arafa-totals-row">
                     <span>Add: SGST</span>
-                    <span className="font-bold">₹{totalSgst.toFixed(2)}</span>
+                    <span className="font-bold">₹{numTotalSgst.toFixed(2)}</span>
                   </div>
                 </>
               ) : (
                 <div className="arafa-totals-row" style={{ marginTop: '4px' }}>
                   <span>Add: IGST</span>
-                  <span className="font-bold">₹{totalIgst.toFixed(2)}</span>
+                  <span className="font-bold">₹{numTotalIgst.toFixed(2)}</span>
                 </div>
               )}
               <div className="arafa-totals-divider">------------------</div>
               <div className="arafa-totals-row font-bold" style={{ fontWeight: 700 }}>
                 <strong>Total Tax Amount</strong>
-                <strong className="font-bold">₹{totalTax.toFixed(2)}</strong>
+                <strong className="font-bold">₹{numTotalTax.toFixed(2)}</strong>
               </div>
               <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt', marginTop: '2px' }}>
                 <strong>Final Invoice Amount</strong>
-                <strong className="font-bold">₹{grandTotal.toFixed(2)}</strong>
+                <strong className="font-bold">₹{numGrandTotal.toFixed(2)}</strong>
               </div>
               <div className="arafa-totals-row font-bold" style={{ fontWeight: 700, fontSize: '9pt' }}>
                 <strong>Balance Due</strong>
-                <strong className="font-bold">₹{(balanceDue !== undefined ? balanceDue : grandTotal).toFixed(2)}</strong>
+                <strong className="font-bold">₹{numBalanceDue.toFixed(2)}</strong>
               </div>
             </div>
 

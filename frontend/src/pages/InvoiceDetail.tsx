@@ -18,6 +18,7 @@ import { invoicesApi } from '../api/invoices.api';
 import type { Invoice } from '../types/invoice.types';
 import { formatINR } from '../utils/formatCurrency';
 import { format } from 'date-fns';
+import { safeFormatDate, formatInvoicePdfName } from '../utils/date.utils';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -39,16 +40,7 @@ const InvoiceDetail: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getPdfFilename = () => {
-    let dateStr = 'date';
-    if (invoice?.invoiceDate) {
-      try {
-        dateStr = format(new Date(invoice.invoiceDate), 'dd-MM-yyyy');
-      } catch {
-        dateStr = (invoice.invoiceDate || '').split('T')[0];
-      }
-    }
-    const custName = (invoice?.customer?.name || 'Customer').trim();
-    return `${custName}- invoice  ${dateStr}.pdf`;
+    return formatInvoicePdfName(invoice?.customer?.name, invoice?.invoiceDate);
   };
 
   useEffect(() => {
@@ -110,7 +102,7 @@ const InvoiceDetail: React.FC = () => {
     document.title = filename;
     window.print();
     setTimeout(() => {
-      document.title = filename;
+      document.title = oldTitle;
     }, 1500);
   };
 
@@ -266,7 +258,7 @@ const InvoiceDetail: React.FC = () => {
           </Link>
           <h1 className="page-title">{invoice.invoiceNumber}</h1>
           <p className="page-subtitle">
-            {format(new Date(invoice.invoiceDate), 'dd MMMM yyyy')} •{' '}
+            {safeFormatDate(invoice.invoiceDate, 'dd MMMM yyyy')} •{' '}
             <span className={`badge badge-${invoice.status}`}>{invoice.status}</span>{' '}
             <span className={`badge badge-${invoice.paymentStatus}`}>{invoice.paymentStatus}</span>
           </p>
@@ -376,8 +368,8 @@ const InvoiceDetail: React.FC = () => {
                 </span>
               </div>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                {(invoice.pdfAttachment.size / 1024).toFixed(1)} KB • Uploaded on{' '}
-                {format(new Date(invoice.pdfAttachment.uploadedAt), 'dd MMM yyyy, hh:mm a')}
+                {(((invoice.pdfAttachment.size || 0) / 1024)).toFixed(1)} KB • Uploaded on{' '}
+                {safeFormatDate(invoice.pdfAttachment.uploadedAt, 'dd MMM yyyy, hh:mm a', 'Recently')}
               </div>
             </div>
           </div>
@@ -471,7 +463,7 @@ interface PaymentModalProps {
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ invoice, onClose, onSaved }) => {
-  const [amount, setAmount]   = useState(invoice.balanceDue.toString());
+  const [amount, setAmount]   = useState(((invoice.balanceDue !== undefined && invoice.balanceDue !== null ? invoice.balanceDue : invoice.grandTotal) || 0).toString());
   const [method, setMethod]   = useState<'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'other'>('upi');
   const [ref, setRef]         = useState('');
   const [date, setDate]       = useState(format(new Date(), 'yyyy-MM-dd'));
