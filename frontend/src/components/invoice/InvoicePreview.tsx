@@ -241,22 +241,22 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
               <div className="arafa-grid-cell text-center">{item.hsnSac}</div>
               <div className="arafa-grid-cell text-center">{item.quantity}</div>
               <div className="arafa-grid-cell text-center">{item.unit || 'PCS'}</div>
-              <div className="arafa-grid-cell text-right">{(Number(item.unitRate) || 0).toFixed(2)}</div>
-              <div className="arafa-grid-cell text-right">{(Number(item.taxableAmount) || 0).toFixed(2)}</div>
+              <div className="arafa-grid-cell text-center">{(Number(item.unitRate) || 0).toFixed(2)}</div>
+              <div className="arafa-grid-cell text-center">{(Number(item.taxableAmount) || 0).toFixed(2)}</div>
               {!isInterState ? (
                 <>
                   <div className="arafa-grid-cell text-center">{(Number(item.cgstRate) || 0).toFixed(2)}%</div>
-                  <div className="arafa-grid-cell text-right">{(Number(item.cgstAmount) || 0).toFixed(2)}</div>
+                  <div className="arafa-grid-cell text-center">{(Number(item.cgstAmount) || 0).toFixed(2)}</div>
                   <div className="arafa-grid-cell text-center">{(Number(item.sgstRate) || 0).toFixed(2)}%</div>
-                  <div className="arafa-grid-cell text-right">{(Number(item.sgstAmount) || 0).toFixed(2)}</div>
+                  <div className="arafa-grid-cell text-center">{(Number(item.sgstAmount) || 0).toFixed(2)}</div>
                 </>
               ) : (
                 <>
                   <div className="arafa-grid-cell text-center">{(Number(item.igstRate) || 0).toFixed(2)}%</div>
-                  <div className="arafa-grid-cell text-right">{(Number(item.igstAmount) || 0).toFixed(2)}</div>
+                  <div className="arafa-grid-cell text-center">{(Number(item.igstAmount) || 0).toFixed(2)}</div>
                 </>
               )}
-              <div className="arafa-grid-cell text-right">{(Number(item.totalAmount) || 0).toFixed(2)}</div>
+              <div className="arafa-grid-cell text-center">{(Number(item.totalAmount) || 0).toFixed(2)}</div>
             </div>
           ))}
 
@@ -266,21 +266,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
             <div className="arafa-grid-cell text-center font-bold">{totalQty}</div>
             <div className="arafa-grid-cell"></div>
             <div className="arafa-grid-cell"></div>
-            <div className="arafa-grid-cell text-right font-bold">₹{subTotal.toFixed(2)}</div>
+            <div className="arafa-grid-cell text-center font-bold">₹{subTotal.toFixed(2)}</div>
             {!isInterState ? (
               <>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-right font-bold">₹{totalCgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{totalCgst.toFixed(2)}</div>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-right font-bold">₹{totalSgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{totalSgst.toFixed(2)}</div>
               </>
             ) : (
               <>
                 <div className="arafa-grid-cell"></div>
-                <div className="arafa-grid-cell text-right font-bold">₹{totalIgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell text-center font-bold">₹{totalIgst.toFixed(2)}</div>
               </>
             )}
-            <div className="arafa-grid-cell text-right font-bold">₹{grandTotal.toFixed(2)}</div>
+            <div className="arafa-grid-cell text-center font-bold">₹{grandTotal.toFixed(2)}</div>
           </div>
         </div>
 
