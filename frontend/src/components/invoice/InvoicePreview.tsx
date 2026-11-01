@@ -203,86 +203,86 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
           </div>
         </div>
 
-        {/* 4. Products Table */}
-        <table className="arafa-table">
-          <thead>
-            <tr>
-              <th style={{ width: '4%' }}>Sl.<br />No.</th>
-              <th className="text-left" style={{ width: '25%' }}>Name of Product</th>
-              <th style={{ width: '10%' }}>HSN/SAC</th>
-              <th style={{ width: '5%' }}>Qty</th>
-              <th style={{ width: '5%' }}>Unit</th>
-              <th style={{ width: '7%' }}>Rate</th>
-              <th style={{ width: '9%' }}>Taxable<br />Value</th>
+        {/* 4. Products Table (CSS Grid format for 100% pixel-perfect rendering) */}
+        <div className="arafa-grid-table">
+          {/* Header Row */}
+          <div className={`arafa-grid-row ${!isInterState ? 'arafa-row-intra' : 'arafa-row-inter'}`}>
+            <div className="arafa-grid-cell arafa-grid-header">Sl.<br />No.</div>
+            <div className="arafa-grid-cell arafa-grid-header text-left">Name of Product</div>
+            <div className="arafa-grid-cell arafa-grid-header">HSN/SAC</div>
+            <div className="arafa-grid-cell arafa-grid-header">Qty</div>
+            <div className="arafa-grid-cell arafa-grid-header">Unit</div>
+            <div className="arafa-grid-cell arafa-grid-header">Rate</div>
+            <div className="arafa-grid-cell arafa-grid-header">Taxable<br />Value</div>
+            {!isInterState ? (
+              <>
+                <div className="arafa-grid-cell arafa-grid-header">CGST<br />Rate</div>
+                <div className="arafa-grid-cell arafa-grid-header">CGST<br />Amount</div>
+                <div className="arafa-grid-cell arafa-grid-header">SGST<br />Rate</div>
+                <div className="arafa-grid-cell arafa-grid-header">SGST<br />Amount</div>
+              </>
+            ) : (
+              <>
+                <div className="arafa-grid-cell arafa-grid-header">IGST<br />Rate</div>
+                <div className="arafa-grid-cell arafa-grid-header">IGST<br />Amount</div>
+              </>
+            )}
+            <div className="arafa-grid-cell arafa-grid-header">Total</div>
+          </div>
+
+          {/* Item Rows */}
+          {items.map((item, i) => (
+            <div
+              className={`arafa-grid-row ${!isInterState ? 'arafa-row-intra' : 'arafa-row-inter'}`}
+              key={item._id || i}
+            >
+              <div className="arafa-grid-cell text-center">{item.srNo ?? i + 1}</div>
+              <div className="arafa-grid-cell text-left">{item.productName}</div>
+              <div className="arafa-grid-cell text-center">{item.hsnSac}</div>
+              <div className="arafa-grid-cell text-center">{item.quantity}</div>
+              <div className="arafa-grid-cell text-center">{item.unit || 'PCS'}</div>
+              <div className="arafa-grid-cell text-right">{(Number(item.unitRate) || 0).toFixed(2)}</div>
+              <div className="arafa-grid-cell text-right">{(Number(item.taxableAmount) || 0).toFixed(2)}</div>
               {!isInterState ? (
                 <>
-                  <th style={{ width: '6%' }}>CGST<br />Rate</th>
-                  <th style={{ width: '7%' }}>CGST<br />Amount</th>
-                  <th style={{ width: '6%' }}>SGST<br />Rate</th>
-                  <th style={{ width: '7%' }}>SGST<br />Amount</th>
+                  <div className="arafa-grid-cell text-center">{(Number(item.cgstRate) || 0).toFixed(2)}%</div>
+                  <div className="arafa-grid-cell text-right">{(Number(item.cgstAmount) || 0).toFixed(2)}</div>
+                  <div className="arafa-grid-cell text-center">{(Number(item.sgstRate) || 0).toFixed(2)}%</div>
+                  <div className="arafa-grid-cell text-right">{(Number(item.sgstAmount) || 0).toFixed(2)}</div>
                 </>
               ) : (
                 <>
-                  <th style={{ width: '13%' }}>IGST<br />Rate</th>
-                  <th style={{ width: '13%' }}>IGST<br />Amount</th>
+                  <div className="arafa-grid-cell text-center">{(Number(item.igstRate) || 0).toFixed(2)}%</div>
+                  <div className="arafa-grid-cell text-right">{(Number(item.igstAmount) || 0).toFixed(2)}</div>
                 </>
               )}
-              <th style={{ width: '9%' }}>Total</th>
-            </tr>
-          </thead>
+              <div className="arafa-grid-cell text-right">{(Number(item.totalAmount) || 0).toFixed(2)}</div>
+            </div>
+          ))}
 
-          <tbody>
-            {items.map((item, i) => (
-              <tr key={item._id || i}>
-                <td className="text-center">{item.srNo ?? i + 1}</td>
-                <td className="text-left">{item.productName}</td>
-                <td className="text-center">{item.hsnSac}</td>
-                <td className="text-center">{item.quantity}</td>
-                <td className="text-center">{item.unit || 'PCS'}</td>
-                <td className="text-right">{(Number(item.unitRate) || 0).toFixed(2)}</td>
-                <td className="text-right">{(Number(item.taxableAmount) || 0).toFixed(2)}</td>
-                {!isInterState ? (
-                  <>
-                    <td className="text-center">{(Number(item.cgstRate) || 0).toFixed(2)}%</td>
-                    <td className="text-right">{(Number(item.cgstAmount) || 0).toFixed(2)}</td>
-                    <td className="text-center">{(Number(item.sgstRate) || 0).toFixed(2)}%</td>
-                    <td className="text-right">{(Number(item.sgstAmount) || 0).toFixed(2)}</td>
-                  </>
-                ) : (
-                  <>
-                    <td className="text-center">{(Number(item.igstRate) || 0).toFixed(2)}%</td>
-                    <td className="text-right">{(Number(item.igstAmount) || 0).toFixed(2)}</td>
-                  </>
-                )}
-                <td className="text-right">{(Number(item.totalAmount) || 0).toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-
-          <tfoot>
-            <tr>
-              <td colSpan={3} className="text-right font-bold">TOTAL</td>
-              <td className="text-center font-bold">{totalQty}</td>
-              <td></td>
-              <td></td>
-              <td className="text-right font-bold">₹{subTotal.toFixed(2)}</td>
-              {!isInterState ? (
-                <>
-                  <td></td>
-                  <td className="text-right font-bold">₹{totalCgst.toFixed(2)}</td>
-                  <td></td>
-                  <td className="text-right font-bold">₹{totalSgst.toFixed(2)}</td>
-                </>
-              ) : (
-                <>
-                  <td></td>
-                  <td className="text-right font-bold">₹{totalIgst.toFixed(2)}</td>
-                </>
-              )}
-              <td className="text-right font-bold">₹{grandTotal.toFixed(2)}</td>
-            </tr>
-          </tfoot>
-        </table>
+          {/* TOTAL Row */}
+          <div className={`arafa-grid-row ${!isInterState ? 'arafa-row-intra' : 'arafa-row-inter'}`}>
+            <div className="arafa-grid-cell arafa-col-span-3 text-right font-bold">TOTAL</div>
+            <div className="arafa-grid-cell text-center font-bold">{totalQty}</div>
+            <div className="arafa-grid-cell"></div>
+            <div className="arafa-grid-cell"></div>
+            <div className="arafa-grid-cell text-right font-bold">₹{subTotal.toFixed(2)}</div>
+            {!isInterState ? (
+              <>
+                <div className="arafa-grid-cell"></div>
+                <div className="arafa-grid-cell text-right font-bold">₹{totalCgst.toFixed(2)}</div>
+                <div className="arafa-grid-cell"></div>
+                <div className="arafa-grid-cell text-right font-bold">₹{totalSgst.toFixed(2)}</div>
+              </>
+            ) : (
+              <>
+                <div className="arafa-grid-cell"></div>
+                <div className="arafa-grid-cell text-right font-bold">₹{totalIgst.toFixed(2)}</div>
+              </>
+            )}
+            <div className="arafa-grid-cell text-right font-bold">₹{grandTotal.toFixed(2)}</div>
+          </div>
+        </div>
 
         {/* 5. Bottom Split Summary Area */}
         <div className="arafa-bottom-grid">

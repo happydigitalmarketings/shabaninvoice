@@ -149,49 +149,87 @@
   margin-bottom: 4px;
 }
 
-/* ── 4. Items Table ── */
-.arafa-table {
+/* ── 4. Items Table (CSS Grid for 100% bug-free PDF and Print rendering) ── */
+.arafa-grid-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 8pt;
-  border-top: 1px solid var(--arafa-border-color);
-  border-left: 1px solid var(--arafa-border-color);
-}
-
-.arafa-table th,
-.arafa-table td {
-  border-right: 1px solid var(--arafa-border-color);
   border-bottom: 1px solid var(--arafa-border-color);
-  border-top: none;
-  border-left: none;
-  padding: 4px 5px;
-  vertical-align: middle;
+  background: #ffffff;
   box-sizing: border-box;
 }
 
-.arafa-table th {
-  background: #ffffff;
+.arafa-grid-row {
+  display: grid;
+  border-bottom: 1px solid var(--arafa-border-color);
+  min-height: 28px;
+  box-sizing: border-box;
+}
+
+.arafa-grid-row:last-child {
+  border-bottom: none;
+}
+
+/* Intra-state 12 columns */
+.arafa-row-intra {
+  grid-template-columns: 4% 25% 10% 5% 5% 7% 9% 6% 7% 6% 7% 9%;
+}
+
+/* Inter-state 10 columns */
+.arafa-row-inter {
+  grid-template-columns: 4% 25% 10% 5% 5% 7% 9% 13% 13% 9%;
+}
+
+.arafa-grid-cell {
+  border-right: 1px solid var(--arafa-border-color);
+  padding: 6px 4px;
+  font-size: 8pt;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.arafa-grid-cell:last-child {
+  border-right: none;
+}
+
+/* Header Cells */
+.arafa-grid-header {
   font-weight: 700;
   text-align: center;
-  font-size: 8pt;
-  line-height: 1.2;
+  justify-content: center;
+  line-height: 1.25;
 }
 
-.arafa-table td {
-  font-size: 8pt;
+.arafa-grid-header.text-left {
+  justify-content: flex-start;
+  text-align: left;
 }
 
-.arafa-table .text-left { text-align: left; }
-.arafa-table .text-center { text-align: center; }
-.arafa-table .text-right { text-align: right; }
+/* Cell Alignments */
+.arafa-grid-cell.text-left {
+  justify-content: flex-start;
+  text-align: left;
+}
 
-.arafa-table .font-bold {
+.arafa-grid-cell.text-center {
+  justify-content: center;
+  text-align: center;
+}
+
+.arafa-grid-cell.text-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.arafa-grid-cell.font-bold {
   font-weight: 700;
 }
 
-.arafa-table tfoot td {
-  font-size: 8pt;
+/* Merged column for TOTAL label in footer */
+.arafa-col-span-3 {
+  grid-column: span 3;
 }
 
 /* ── 5. Bottom Summary Container ── */
