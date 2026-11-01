@@ -54,6 +54,7 @@ const CreateInvoice: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   // Invoice fields
+  const [invNumber, setInvNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentTerms, setPaymentTerms] = useState('Immediate');
   const [reverseCharge, setReverseCharge] = useState(false);
@@ -96,6 +97,7 @@ const CreateInvoice: React.FC = () => {
     if (!id) return;
     invoicesApi.getById(id).then(res => {
       const inv = res.data;
+      setInvNumber(inv.invoiceNumber || '');
       setInvoiceDate(inv.invoiceDate?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'));
       setPaymentTerms(inv.paymentTerms || 'Immediate');
       setReverseCharge(inv.reverseCharge || false);
@@ -175,6 +177,7 @@ const CreateInvoice: React.FC = () => {
   const totals = calculateInvoiceTotals(items);
 
   const buildPayload = () => ({
+    ...(invNumber ? { invoiceNumber: invNumber } : {}),
     invoiceDate,
     paymentTerms,
     reverseCharge,
@@ -256,8 +259,8 @@ const CreateInvoice: React.FC = () => {
     <div>
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">{isEdit ? 'Edit Invoice' : 'New Invoice'}</h1>
-          <p className="page-subtitle">Fill in the details below to create a GST tax invoice</p>
+          <h1 className="page-title">{isEdit ? `Edit Invoice ${invNumber ? `(${invNumber})` : ''}` : 'New Invoice'}</h1>
+          <p className="page-subtitle">{isEdit ? 'Update invoice details, items, or quantities' : 'Fill in the details below to create a GST tax invoice'}</p>
         </div>
       </div>
 
@@ -565,12 +568,14 @@ const CreateInvoice: React.FC = () => {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" onClick={() => navigate('/invoices')}>Cancel</button>
-          <button className="btn btn-secondary" onClick={() => handleSave(true)} disabled={savingDraft}>
-            {savingDraft ? 'Saving...' : 'Save as Draft'}
-          </button>
+          <button className="btn btn-secondary" onClick={() => navigate(isEdit && id ? `/invoices/${id}` : '/invoices')}>Cancel</button>
+          {!isEdit && (
+            <button className="btn btn-secondary" onClick={() => handleSave(true)} disabled={savingDraft}>
+              {savingDraft ? 'Saving...' : 'Save as Draft'}
+            </button>
+          )}
           <button id="create-invoice-submit" className="btn btn-primary btn-lg" onClick={() => handleSave(false)} disabled={saving}>
-            {saving ? 'Creating...' : isEdit ? 'Update Invoice' : 'Create & Issue Invoice'}
+            {saving ? 'Saving...' : isEdit ? 'Update Invoice' : 'Create & Issue Invoice'}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Eye, Edit } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
@@ -170,9 +170,16 @@ const Invoices: React.FC = () => {
                     <td>{payBadge(inv.paymentStatus)}</td>
                     <td>{statusBadge(inv.status)}</td>
                     <td>
-                      <Link to={`/invoices/${inv._id}`} className="btn btn-ghost btn-sm">
-                        <Eye size={14} /> View
-                      </Link>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                        <Link to={`/invoices/${inv._id}`} className="btn btn-ghost btn-sm" title="View / Print">
+                          <Eye size={14} /> View
+                        </Link>
+                        {inv.status !== 'cancelled' && (
+                          <Link to={`/invoices/${inv._id}/edit`} className="btn btn-ghost btn-sm" title="Edit Invoice">
+                            <Edit size={14} /> Edit
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

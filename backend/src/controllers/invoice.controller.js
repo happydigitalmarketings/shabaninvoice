@@ -111,8 +111,21 @@ const create = async (req, res) => {
 // PUT /api/invoices/:id
 const update = async (req, res) => {
   try {
+    const existing = await Invoice.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Invoice not found' });
+
+    if (req.body.grandTotal !== undefined) {
+      const amountPaid = existing.amountPaid || 0;
+      req.body.balanceDue = Math.max(0, Number(req.body.grandTotal) - amountPaid);
+      if (req.body.balanceDue === 0 && req.body.grandTotal > 0) {
+        req.body.paymentStatus = 'paid';
+      } else if (amountPaid > 0 && req.body.balanceDue > 0) {
+        req.body.paymentStatus = 'partial';
+      } else {
+        req.body.paymentStatus = 'unpaid';
+      }
+    }
     const invoice = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: false });
-    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
     res.json(invoice);
   } catch (err) {
     res.status(400).json({ message: err.message });

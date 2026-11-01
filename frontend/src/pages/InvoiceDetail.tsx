@@ -93,15 +93,16 @@ const InvoiceDetail: React.FC = () => {
         </div>
 
         <div className="page-actions no-print">
+          {invoice.status !== 'cancelled' && (
+            <Link to={`/invoices/${id}/edit`} className="btn btn-secondary">
+              <Edit size={16} /> Edit
+            </Link>
+          )}
+
           {isDraft && (
-            <>
-              <Link to={`/invoices/${id}/edit`} className="btn btn-secondary">
-                <Edit size={16} /> Edit
-              </Link>
-              <button className="btn btn-success" onClick={handleIssue} disabled={issuing}>
-                <CheckCircle size={16} /> {issuing ? 'Issuing...' : 'Issue Invoice'}
-              </button>
-            </>
+            <button className="btn btn-success" onClick={handleIssue} disabled={issuing}>
+              <CheckCircle size={16} /> {issuing ? 'Issuing...' : 'Issue Invoice'}
+            </button>
           )}
 
           {isIssued && invoice.paymentStatus !== 'paid' && (
