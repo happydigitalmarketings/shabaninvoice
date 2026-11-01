@@ -61,11 +61,13 @@ export interface Invoice {
   _id?: string;
   invoiceNumber: string;
   invoiceDate: string;
+  branch?: string;
   dueDate?: string;
   seller: SellerInfo;
   customerId?: string;
   customer: {
     name: string;
+    branch?: string;
     gstin?: string;
     phone?: string;
     email?: string;

@@ -9,6 +9,8 @@ router.get('/next-number',       ctrl.nextNumber);
 router.get('/reports/summary',   ctrl.reportSummary);
 router.get('/number/:num',       ctrl.getByNumber);
 router.get('/',                  ctrl.getAll);
+router.post('/parse-pdf',        uploadInvoicePdf.single('pdf'), ctrl.parsePdf);
+router.post('/upload-new',       uploadInvoicePdf.single('pdf'), ctrl.createWithPdf);
 router.get('/:id',               ctrl.getById);
 router.post('/',                 ctrl.create);
 router.put('/:id',               ctrl.update);
@@ -17,5 +19,6 @@ router.post('/:id/cancel',       ctrl.cancel);
 router.post('/:id/payments',     ctrl.addPayment);
 router.post('/:id/upload-pdf',   uploadInvoicePdf.single('pdf'), ctrl.uploadPdf);
 router.delete('/:id/pdf',        ctrl.deletePdf);
+router.delete('/:id',            ctrl.remove);
 
 module.exports = router;

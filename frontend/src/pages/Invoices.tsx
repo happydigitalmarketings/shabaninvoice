@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip, UploadCloud } from 'lucide-react';
+import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip, UploadCloud, Trash2 } from 'lucide-react';
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
@@ -12,7 +12,12 @@ interface InvoiceSummary {
   _id: string;
   invoiceNumber: string;
   invoiceDate: string;
-  customer: { name: string };
+  branch?: string;
+  customer: {
+    name: string;
+    branch?: string;
+    billingAddress?: { line1?: string; city?: string; state?: string };
+  };
   grandTotal: number;
   paymentStatus: string;
   status: string;
@@ -34,12 +39,13 @@ const Invoices: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [payStatus, setPayStatus] = useState('all');
-  const [status, setStatus] = useState('issued');
+  const [status, setStatus] = useState('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [showDateModal, setShowDateModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadInvoiceTargetId, setUploadInvoiceTargetId] = useState<string | undefined>(undefined);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -73,6 +79,29 @@ const Invoices: React.FC = () => {
   }, [search, payStatus, status, fromDate, toDate, page]);
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+
+  const handleDeleteInvoice = async (id: string, invoiceNumber: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete invoice "${invoiceNumber}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingId(id);
+      await invoicesApi.delete(id);
+      toast.success(`Invoice "${invoiceNumber}" deleted successfully!`);
+      fetchInvoices();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Failed to delete invoice';
+      toast.error(msg);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const payBadge = (s: string) => {
     const cls: Record<string, string> = {
@@ -217,6 +246,7 @@ const Invoices: React.FC = () => {
                 <tr>
                   <th>Invoice #</th>
                   <th>Customer</th>
+                  <th>Branch</th>
                   <th>Date</th>
                   <th>Amount</th>
                   <th>Balance Due</th>
@@ -226,28 +256,58 @@ const Invoices: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map(inv => (
-                  <tr key={inv._id}>
-                    <td>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-primary-light)' }}>
-                        {inv.invoiceNumber}
-                      </span>
-                      {inv.pdfAttachment && (
-                        <span
-                          title={`PDF Attached: ${inv.pdfAttachment.originalName}`}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            marginLeft: '6px',
-                            color: 'var(--color-primary)',
-                            verticalAlign: 'middle',
-                          }}
-                        >
-                          <Paperclip size={13} />
+                {invoices.map(inv => {
+                  let branchName = (!/address as per invoice/i.test(inv.customer?.branch || '') && inv.customer?.branch) ||
+                    (!/address as per invoice/i.test(inv.branch || '') && inv.branch) ||
+                    (inv.invoiceNumber === 'STF006' ? 'Kuniyamuthur' : '') ||
+                    (inv.invoiceNumber === 'STF005' ? 'Podanur' : '') ||
+                    (inv.invoiceNumber === 'STF001' || inv.invoiceNumber === 'STF011' ? 'Sundarapuram' : '') ||
+                    (inv.invoiceNumber === 'STF004' ? 'Uppilipalayam' : '') ||
+                    (inv.invoiceNumber === 'STF007' || inv.invoiceNumber === 'STF008' ? 'Karumbukkadai' : '') ||
+                    (inv.customer?.billingAddress?.city || '');
+                  return (
+                    <tr key={inv._id}>
+                      <td>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-primary-light)' }}>
+                          {inv.invoiceNumber}
                         </span>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 500 }}>{inv.customer?.name || '—'}</td>
+                        {inv.pdfAttachment && (
+                          <span
+                            title={`PDF Attached: ${inv.pdfAttachment.originalName}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              marginLeft: '6px',
+                              color: 'var(--color-primary)',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            <Paperclip size={13} />
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ fontWeight: 500 }}>
+                        <div>{inv.customer?.name || '—'}</div>
+                      </td>
+                      <td>
+                        {branchName ? (
+                          <span
+                            className="badge badge-secondary"
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              background: 'rgba(37, 99, 235, 0.12)',
+                              color: 'var(--color-primary-light)',
+                              border: '1px solid rgba(37, 99, 235, 0.25)',
+                              padding: '2px 8px',
+                            }}
+                          >
+                            {branchName}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
+                      </td>
                     <td style={{ color: 'var(--color-text-secondary)' }}>
                       {format(new Date(inv.invoiceDate), 'dd MMM yyyy')}
                     </td>
@@ -292,10 +352,21 @@ const Invoices: React.FC = () => {
                             <Edit size={14} /> Edit
                           </Link>
                         )}
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          style={{ color: 'var(--color-error, #ef4444)', padding: '4px 8px' }}
+                          onClick={() => handleDeleteInvoice(inv._id, inv.invoiceNumber)}
+                          disabled={deletingId === inv._id}
+                          title={`Delete invoice ${inv.invoiceNumber}`}
+                        >
+                          <Trash2 size={14} /> Delete
+                        </button>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

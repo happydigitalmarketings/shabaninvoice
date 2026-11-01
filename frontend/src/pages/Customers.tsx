@@ -26,7 +26,7 @@ const STATE_CODES: Record<string, string> = {
 };
 
 const emptyForm = (): Omit<Customer, '_id' | 'createdAt' | 'updatedAt'> => ({
-  name: '', gstin: '', phone: '', email: '',
+  name: '', branch: '', gstin: '', phone: '', email: '',
   sameAsBilling: true,
   billingAddress: { line1: '', line2: '', city: '', state: 'Tamil Nadu', stateCode: '33', pincode: '' },
 });
@@ -60,8 +60,11 @@ const Customers: React.FC = () => {
 
   const openEdit = (c: Customer) => {
     setEditing(c);
+    let b = c.branch || '';
+    if (/address as per invoice/i.test(b)) b = '';
     setForm({
       name:           c.name,
+      branch:         b,
       gstin:          c.gstin || '',
       phone:          c.phone || '',
       email:          c.email || '',
@@ -74,8 +77,6 @@ const Customers: React.FC = () => {
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Customer name is required'); return; }
-    if (!form.billingAddress.line1.trim()) { toast.error('Address is required'); return; }
-    if (!form.billingAddress.city.trim())  { toast.error('City is required'); return; }
     try {
       setSaving(true);
       if (editing?._id) {
@@ -160,6 +161,7 @@ const Customers: React.FC = () => {
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Branch</th>
                   <th>GSTIN</th>
                   <th>Phone</th>
                   <th>City</th>
@@ -171,6 +173,11 @@ const Customers: React.FC = () => {
                 {customers.map(c => (
                   <tr key={c._id}>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
+                    <td>
+                      <span className="badge badge-secondary" style={{ fontSize: '11px', fontWeight: 600 }}>
+                        {(!/address as per invoice/i.test(c.branch || '') && c.branch) || c.billingAddress?.city || '—'}
+                      </span>
+                    </td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{c.gstin || '—'}</td>
                     <td>{c.phone || '—'}</td>
                     <td>{c.billingAddress?.city || '—'}</td>
@@ -210,6 +217,10 @@ const Customers: React.FC = () => {
                   <input className="form-input" value={form.name} onChange={e => setField('name', e.target.value)} placeholder="Business or person name" />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Branch / Location</label>
+                  <input className="form-input" value={form.branch || ''} onChange={e => setField('branch', e.target.value)} placeholder="e.g. Podanur, Kuniyamuthur" />
+                </div>
+                <div className="form-group">
                   <label className="form-label">GSTIN</label>
                   <input className="form-input" value={form.gstin || ''} onChange={e => setField('gstin', e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" maxLength={15} />
                 </div>
@@ -224,19 +235,19 @@ const Customers: React.FC = () => {
               </div>
 
               <div>
-                <label className="form-label" style={{ marginBottom: 'var(--space-2)', display: 'block' }}>Billing Address</label>
+                <label className="form-label" style={{ marginBottom: 'var(--space-2)', display: 'block' }}>Billing Address (Optional)</label>
                 <div className="form-grid form-grid-2" style={{ gap: 'var(--space-3)' }}>
                   <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                    <input className="form-input" value={form.billingAddress.line1} onChange={e => setBillingField('line1', e.target.value)} placeholder="Address Line 1 *" />
+                    <input className="form-input" value={form.billingAddress.line1} onChange={e => setBillingField('line1', e.target.value)} placeholder="Address Line 1 (optional)" />
                   </div>
                   <div className="form-group" style={{ gridColumn: '1/-1' }}>
                     <input className="form-input" value={form.billingAddress.line2 || ''} onChange={e => setBillingField('line2', e.target.value)} placeholder="Address Line 2 (optional)" />
                   </div>
                   <div className="form-group">
-                    <input className="form-input" value={form.billingAddress.city} onChange={e => setBillingField('city', e.target.value)} placeholder="City *" />
+                    <input className="form-input" value={form.billingAddress.city} onChange={e => setBillingField('city', e.target.value)} placeholder="City (optional)" />
                   </div>
                   <div className="form-group">
-                    <input className="form-input" value={form.billingAddress.pincode} onChange={e => setBillingField('pincode', e.target.value)} placeholder="Pincode" maxLength={6} />
+                    <input className="form-input" value={form.billingAddress.pincode} onChange={e => setBillingField('pincode', e.target.value)} placeholder="Pincode (optional)" maxLength={6} />
                   </div>
                   <div className="form-group">
                     <select className="form-select" value={form.billingAddress.state} onChange={e => handleStateChange(e.target.value)}>

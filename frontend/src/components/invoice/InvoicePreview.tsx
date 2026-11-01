@@ -90,6 +90,15 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
     ? notes.split(':')[1]?.trim()
     : '';
 
+  // Branch
+  const customerBranch = (!/address as per invoice/i.test(customer?.branch || '') && customer?.branch) ||
+    (!/address as per invoice/i.test(invoice.branch || '') && invoice.branch) ||
+    (invoiceNumber === 'STF006' ? 'Kuniyamuthur' : '') ||
+    (invoiceNumber === 'STF005' ? 'Podanur' : '') ||
+    (invoiceNumber === 'STF001' || invoiceNumber === 'STF011' ? 'Sundarapuram' : '') ||
+    (invoiceNumber === 'STF004' ? 'Uppilipalayam' : '') ||
+    (invoiceNumber === 'STF007' || invoiceNumber === 'STF008' ? 'Karumbukkadai' : '');
+
   // Sum of quantities
   const totalQty = items.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
 
@@ -187,6 +196,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
           <div className="arafa-party-col">
             <div className="arafa-party-heading">Details of Receiver / Billed To</div>
             <div><strong>Name:</strong> {customer?.name}</div>
+            {customerBranch && <div><strong>Branch:</strong> {customerBranch}</div>}
             <div><strong>Address:</strong> {billingAddrString}</div>
             <div><strong>GSTIN:</strong> {customer?.gstin || ''}</div>
             <div><strong>State Code:</strong> {customer?.stateCode || sellerStateCode}</div>
@@ -196,6 +206,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
           <div className="arafa-party-col">
             <div className="arafa-party-heading">Details of Consignee / Shipped To</div>
             <div><strong>Name:</strong> {customer?.name}</div>
+            {customerBranch && <div><strong>Branch:</strong> {customerBranch}</div>}
             <div><strong>Address:</strong> {shippingAddrString}</div>
             <div><strong>GSTIN:</strong> {customer?.gstin || ''}</div>
             <div><strong>State Code:</strong> {shippingAddr?.stateCode || customer?.stateCode || sellerStateCode}</div>

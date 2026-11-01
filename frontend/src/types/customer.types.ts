@@ -10,6 +10,7 @@ export interface Address {
 export interface Customer {
   _id?: string;
   name: string;
+  branch?: string;
   gstin?: string;
   phone?: string;
   email?: string;
@@ -22,6 +23,7 @@ export interface Customer {
 
 export interface CustomerFormData {
   name: string;
+  branch?: string;
   gstin?: string;
   phone?: string;
   email?: string;

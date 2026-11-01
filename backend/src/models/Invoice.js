@@ -60,6 +60,7 @@ const paymentRecordSchema = new mongoose.Schema(
 const customerInfoSchema = new mongoose.Schema(
   {
     name:            { type: String },
+    branch:          { type: String, trim: true },
     gstin:           { type: String },
     phone:           { type: String },
     email:           { type: String },
@@ -75,11 +76,12 @@ const invoiceSchema = new mongoose.Schema(
   {
     invoiceNumber:       { type: String, required: true, unique: true },
     invoiceDate:         { type: String, required: true },
+    branch:              { type: String, trim: true },
     dueDate:             { type: String },
     seller:              { type: sellerInfoSchema },
     customerId:          { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
     customer:            { type: customerInfoSchema, required: true },
-    paymentTerms:        { type: String, default: 'Due on Receipt' },
+    paymentTerms:        { type: String, default: 'Credit' },
     reverseCharge:       { type: Boolean, default: false },
     eWayBillNumber:      { type: String },
     vehicleNumber:       { type: String },

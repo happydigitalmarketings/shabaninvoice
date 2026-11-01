@@ -56,7 +56,7 @@ const CreateInvoice: React.FC = () => {
   // Invoice fields
   const [invNumber, setInvNumber] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [paymentTerms, setPaymentTerms] = useState('Immediate');
+  const [paymentTerms, setPaymentTerms] = useState('Credit');
   const [reverseCharge, setReverseCharge] = useState(false);
   const [eWayBill, setEWayBill]   = useState('');
   const [vehicleNo, setVehicleNo] = useState('');
@@ -66,6 +66,7 @@ const CreateInvoice: React.FC = () => {
 
   // Customer form (manual entry)
   const [custName, setCustName]     = useState('');
+  const [custBranch, setCustBranch] = useState('');
   const [custGstin, setCustGstin]   = useState('');
   const [custPhone, setCustPhone]   = useState('');
   const [custState, setCustState]   = useState('Tamil Nadu');
@@ -93,14 +94,33 @@ const CreateInvoice: React.FC = () => {
     customersApi.getAll(custSearch).then(r => setCustomers(r.data || [])).catch(() => {});
   }, [custSearch]);
 
+  // Auto-fetch next invoice number for new invoice
+  useEffect(() => {
+    if (!id) {
+      invoicesApi.getNextNumber().then(res => {
+        if (res.data?.number) setInvNumber(res.data.number);
+      }).catch(() => {});
+    }
+  }, [id]);
+
   // Load invoice for editing
   useEffect(() => {
     if (!id) return;
     invoicesApi.getById(id).then(res => {
       const inv = res.data;
       setInvNumber(inv.invoiceNumber || '');
+      let b = inv.customer?.branch || inv.branch || '';
+      if (!b || /address as per invoice/i.test(b)) {
+        if (inv.invoiceNumber === 'STF006') b = 'Kuniyamuthur';
+        else if (inv.invoiceNumber === 'STF005') b = 'Podanur';
+        else if (inv.invoiceNumber === 'STF001' || inv.invoiceNumber === 'STF011') b = 'Sundarapuram';
+        else if (inv.invoiceNumber === 'STF004') b = 'Uppilipalayam';
+        else if (inv.invoiceNumber === 'STF007' || inv.invoiceNumber === 'STF008') b = 'Karumbukkadai';
+        else b = '';
+      }
+      setCustBranch(b);
       setInvoiceDate(inv.invoiceDate?.split('T')[0] || format(new Date(), 'yyyy-MM-dd'));
-      setPaymentTerms(inv.paymentTerms || 'Immediate');
+      setPaymentTerms(inv.paymentTerms || 'Credit');
       setReverseCharge(inv.reverseCharge || false);
       setEWayBill(inv.eWayBillNumber || '');
       setVehicleNo(inv.vehicleNumber || '');
@@ -112,7 +132,13 @@ const CreateInvoice: React.FC = () => {
       setCustState(inv.customer?.state || 'Tamil Nadu');
       setCustStateCode(inv.customer?.stateCode || '33');
       const ba = inv.customer?.billingAddress;
-      if (ba) { setBillLine1(ba.line1); setBillLine2(ba.line2 || ''); setBillCity(ba.city); setBillPincode(ba.pincode); }
+      if (ba) {
+        const l1 = /address as per invoice/i.test(ba.line1 || '') ? '' : ba.line1 || '';
+        setBillLine1(l1);
+        setBillLine2(ba.line2 || '');
+        setBillCity(ba.city || '');
+        setBillPincode(ba.pincode || '');
+      }
       setItems(inv.items || [{ ...emptyItem() }]);
     }).catch(() => toast.error('Could not load invoice'));
   }, [id]);
@@ -120,13 +146,28 @@ const CreateInvoice: React.FC = () => {
   const applyCustomer = (c: Customer) => {
     setSelectedCust(c);
     setCustName(c.name);
+    let b = c.branch || '';
+    if (/address as per invoice/i.test(b)) b = '';
+    if (!b) b = c.billingAddress?.city || '';
+    setCustBranch(b);
     setCustGstin(c.gstin || '');
     setCustPhone(c.phone || '');
     const s = INDIAN_STATES.find(s => s.name === (c.billingAddress?.state || 'Tamil Nadu'));
     setCustState(c.billingAddress?.state || 'Tamil Nadu');
     setCustStateCode(c.billingAddress?.stateCode || s?.code || '33');
     const ba = c.billingAddress;
-    if (ba) { setBillLine1(ba.line1); setBillLine2(ba.line2 || ''); setBillCity(ba.city); setBillPincode(ba.pincode); }
+    if (ba) {
+      const l1 = /address as per invoice/i.test(ba.line1 || '') ? '' : ba.line1 || '';
+      setBillLine1(l1);
+      setBillLine2(ba.line2 || '');
+      setBillCity(ba.city || '');
+      setBillPincode(ba.pincode || '');
+    } else {
+      setBillLine1('');
+      setBillLine2('');
+      setBillCity('');
+      setBillPincode('');
+    }
     setIsInterState((c.billingAddress?.state || 'Tamil Nadu') !== 'Tamil Nadu');
     setShowCustDrop(false);
     setCustSearch('');
@@ -179,6 +220,7 @@ const CreateInvoice: React.FC = () => {
 
   const buildPayload = () => ({
     ...(invNumber ? { invoiceNumber: invNumber } : {}),
+    branch: custBranch,
     invoiceDate,
     paymentTerms,
     reverseCharge,
@@ -204,9 +246,10 @@ const CreateInvoice: React.FC = () => {
     },
     customerId:     selectedCust?._id,
     customer: {
-      name:  custName,
-      gstin: custGstin,
-      phone: custPhone,
+      name:   custName,
+      branch: custBranch,
+      gstin:  custGstin,
+      phone:  custPhone,
       state: custState,
       stateCode: custStateCode,
       billingAddress: { line1: billLine1, line2: billLine2, city: billCity, state: custState, stateCode: custStateCode, pincode: billPincode },
@@ -221,8 +264,6 @@ const CreateInvoice: React.FC = () => {
 
   const validate = () => {
     if (!custName.trim())    { toast.error('Customer name is required'); return false; }
-    if (!billLine1.trim())   { toast.error('Billing address is required'); return false; }
-    if (!billCity.trim())    { toast.error('Billing city is required'); return false; }
     if (items.some(it => !it.productName.trim())) { toast.error('All items need a product name'); return false; }
     if (items.some(it => it.quantity <= 0))        { toast.error('Quantity must be > 0'); return false; }
     if (items.some(it => it.unitRate <= 0))        { toast.error('Unit rate must be > 0'); return false; }
@@ -335,6 +376,19 @@ const CreateInvoice: React.FC = () => {
               <input id="cust-name" className="form-input" value={custName} onChange={e => setCustName(e.target.value)} placeholder="Customer or Business Name" />
             </div>
             <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Branch <span className="required">*</span></span>
+                <span style={{ fontSize: '11px', color: 'var(--color-primary-light)', fontWeight: 400 }}>e.g. Kuniyamuthur, Podanur, Sundarapuram</span>
+              </label>
+              <input
+                id="cust-branch"
+                className="form-input"
+                value={custBranch}
+                onChange={e => setCustBranch(e.target.value)}
+                placeholder="Branch name (e.g. Kuniyamuthur, Podanur, Sundarapuram)"
+              />
+            </div>
+            <div className="form-group">
               <label className="form-label">GSTIN</label>
               <input className="form-input" value={custGstin} onChange={e => setCustGstin(e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" maxLength={15} />
             </div>
@@ -356,19 +410,19 @@ const CreateInvoice: React.FC = () => {
           </div>
 
           <div style={{ marginTop: 'var(--space-4)' }}>
-            <label className="form-label" style={{ marginBottom: 'var(--space-2)', display: 'block' }}>Billing Address</label>
+            <label className="form-label" style={{ marginBottom: 'var(--space-2)', display: 'block' }}>Billing Address (Optional)</label>
             <div className="form-grid form-grid-2" style={{ gap: 'var(--space-3)' }}>
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                <input className="form-input" value={billLine1} onChange={e => setBillLine1(e.target.value)} placeholder="Address Line 1 *" />
+                <input className="form-input" value={billLine1} onChange={e => setBillLine1(e.target.value)} placeholder="Address Line 1 (optional)" />
               </div>
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <input className="form-input" value={billLine2} onChange={e => setBillLine2(e.target.value)} placeholder="Address Line 2 (optional)" />
               </div>
               <div className="form-group">
-                <input className="form-input" value={billCity} onChange={e => setBillCity(e.target.value)} placeholder="City *" />
+                <input className="form-input" value={billCity} onChange={e => setBillCity(e.target.value)} placeholder="City (optional)" />
               </div>
               <div className="form-group">
-                <input className="form-input" value={billPincode} onChange={e => setBillPincode(e.target.value)} placeholder="Pincode" maxLength={6} />
+                <input className="form-input" value={billPincode} onChange={e => setBillPincode(e.target.value)} placeholder="Pincode (optional)" maxLength={6} />
               </div>
             </div>
           </div>
@@ -401,19 +455,41 @@ const CreateInvoice: React.FC = () => {
           </div>
           <div className="form-grid form-grid-3">
             <div className="form-group">
+              <label className="form-label">Invoice Number <span className="required">*</span></label>
+              <input
+                className="form-input"
+                value={invNumber}
+                onChange={e => setInvNumber(e.target.value)}
+                placeholder="e.g. STF012"
+                style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-primary-light)' }}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Branch</label>
+              <input
+                id="inv-branch"
+                className="form-input"
+                value={custBranch}
+                onChange={e => setCustBranch(e.target.value)}
+                placeholder="Branch (e.g. Kuniyamuthur, Podanur)"
+              />
+            </div>
+            <div className="form-group">
               <label className="form-label">Invoice Date <span className="required">*</span></label>
               <input type="date" className="form-input" value={invoiceDate} onChange={e => setInvoiceDate(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Payment Terms</label>
               <select className="form-select" value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}>
-                <option>Immediate</option>
-                <option>Net 7</option>
-                <option>Net 15</option>
-                <option>Net 30</option>
-                <option>Net 45</option>
-                <option>Net 60</option>
-                <option>Due on Receipt</option>
+                <option value="Credit">Credit</option>
+                <option value="Immediate">Immediate</option>
+                <option value="Due on Receipt">Due on Receipt</option>
+                <option value="Cash">Cash</option>
+                <option value="Net 7">Net 7</option>
+                <option value="Net 15">Net 15</option>
+                <option value="Net 30">Net 30</option>
+                <option value="Net 45">Net 45</option>
+                <option value="Net 60">Net 60</option>
               </select>
             </div>
             <div className="form-group">

@@ -37,5 +37,20 @@ export const invoicesApi = {
     });
   },
 
+  uploadNewPdfInvoice: (formData: FormData) =>
+    axiosClient.post('/invoices/upload-new', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  parsePdf: (file: File) => {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    return axiosClient.post('/invoices/parse-pdf', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   deletePdf: (id: string) => axiosClient.delete(`/invoices/${id}/pdf`),
+
+  delete: (id: string) => axiosClient.delete(`/invoices/${id}`),
 };

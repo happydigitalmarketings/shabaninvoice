@@ -31,6 +31,7 @@ const InvoiceDetail: React.FC = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [deletingPdf, setDeletingPdf] = useState(false);
+  const [deletingInvoice, setDeletingInvoice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -122,6 +123,30 @@ const InvoiceDetail: React.FC = () => {
     }
   };
 
+  const handleDeleteInvoice = async () => {
+    if (!id || !invoice) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete invoice "${invoice.invoiceNumber}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingInvoice(true);
+      await invoicesApi.delete(id);
+      toast.success(`Invoice "${invoice.invoiceNumber}" deleted successfully!`);
+      navigate('/invoices');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Failed to delete invoice';
+      toast.error(msg);
+    } finally {
+      setDeletingInvoice(false);
+    }
+  };
+
   const getPdfDownloadUrl = (url?: string) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -199,6 +224,16 @@ const InvoiceDetail: React.FC = () => {
               <XCircle size={16} /> Cancel
             </button>
           )}
+
+          <button
+            className="btn btn-ghost"
+            style={{ color: 'var(--color-error, #ef4444)' }}
+            onClick={handleDeleteInvoice}
+            disabled={deletingInvoice}
+            title="Delete this entire invoice"
+          >
+            <Trash2 size={16} /> {deletingInvoice ? 'Deleting...' : 'Delete'}
+          </button>
 
           <button className="btn btn-primary" onClick={handlePrint}>
             <Printer size={16} /> Print / PDF
