@@ -5,6 +5,7 @@ import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 
 interface DashboardStats {
   totalInvoices: number;
@@ -25,6 +26,8 @@ interface DashboardStats {
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const today = new Date();
   const from  = format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd');
@@ -32,6 +35,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     (async () => {
+      setLoadError(null);
       try {
         const [summaryRes, recentRes] = await Promise.all([
           invoicesApi.getReportSummary(from, to),
@@ -44,17 +48,20 @@ const Dashboard: React.FC = () => {
           paidThisMonth:  summaryRes.data.paidThisMonth   || 0,
           recentInvoices: recentRes.data.invoices         || [],
         });
-      } catch {
-        toast.error('Could not load dashboard data');
-        setStats({
-          totalInvoices: 0, totalRevenue: 0,
-          outstanding: 0, paidThisMonth: 0, recentInvoices: [],
-        });
+      } catch (error) {
+        const message = isAxiosError<{ message?: string }>(error)
+          ? error.response?.data?.message || (error.request
+            ? 'Backend API did not respond. Make sure the backend is running.'
+            : error.message)
+          : 'Could not load dashboard data';
+        setLoadError(message);
+        toast.error(message);
+        setStats(null);
       } finally {
         setLoading(false);
       }
     })();
-  }, [from, to]);
+  }, [from, to, retryCount]);
 
   const statCards = [
     {
@@ -163,6 +170,22 @@ const Dashboard: React.FC = () => {
         {loading ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
             <div className="spinner spinner-lg" style={{ margin: '0 auto' }} />
+          </div>
+        ) : loadError ? (
+          <div className="empty-state">
+            <p className="empty-state-title">Dashboard data is unavailable</p>
+            <p style={{ fontSize: 'var(--text-sm)' }}>{loadError}</p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ marginTop: 'var(--space-4)' }}
+              onClick={() => {
+                setLoading(true);
+                setRetryCount(count => count + 1);
+              }}
+            >
+              Retry
+            </button>
           </div>
         ) : stats?.recentInvoices.length === 0 ? (
           <div className="empty-state">

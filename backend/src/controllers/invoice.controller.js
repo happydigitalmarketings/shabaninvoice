@@ -3,6 +3,31 @@ const Customer = require('../models/Customer');
 const fs       = require('fs');
 const path     = require('path');
 const zlib     = require('zlib');
+const { uploadPdfBuffer, deletePdfFromGridFs } = require('../utils/gridfs');
+
+const cleanupAttachmentFiles = async (pdfAttachment) => {
+  if (!pdfAttachment) return;
+  if (pdfAttachment.path && fs.existsSync(pdfAttachment.path)) {
+    try {
+      fs.unlinkSync(pdfAttachment.path);
+    } catch (e) {
+      console.error('Failed to unlink local PDF:', e.message);
+    }
+  }
+  await deletePdfFromGridFs({
+    gridFsId: pdfAttachment.gridFsId,
+    filename: pdfAttachment.filename,
+  });
+};
+
+const formatAttachmentDisplayName = (customerName, invoiceDate) => {
+  let formattedDate = 'date';
+  if (invoiceDate) {
+    const parts = String(invoiceDate).split('T')[0].split('-');
+    formattedDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : invoiceDate;
+  }
+  return `${(customerName || 'Customer').trim()}- invoice  ${formattedDate}.pdf`;
+};
 
 const DEFAULT_SELLER = {
   businessName: 'SHABAN TRADITIONAL FOODS',
@@ -166,8 +191,6 @@ let stfMigrated = false;
 const checkAndMigrateUploadedStf011 = async () => {
   if (stfMigrated) return;
   try {
-    const host = process.env.HOST || 'localhost:5000';
-
     // 1. Migrate STF011
     const existingStf011 = await Invoice.findOne({ invoiceNumber: 'STF011' });
     const targetFile011 = 'invoice-6ae6b6c8e35113a8cfadd828-1793524175884.pdf';
@@ -175,7 +198,7 @@ const checkAndMigrateUploadedStf011 = async () => {
 
     if (!existingStf011 && fs.existsSync(filePath011)) {
       const stats = fs.statSync(filePath011);
-      const fileUrl = `http://${host}/uploads/invoices/${targetFile011}`;
+      const fileUrl = `/uploads/invoices/${targetFile011}`;
 
       let customerDoc = await Customer.findOne({ name: /Vikas Super Market/i });
       if (!customerDoc) {
@@ -249,7 +272,7 @@ const checkAndMigrateUploadedStf011 = async () => {
 
     if (!existingStf004 && fs.existsSync(filePath004)) {
       const stats004 = fs.statSync(filePath004);
-      const fileUrl004 = `http://${host}/uploads/invoices/${targetFile004}`;
+      const fileUrl004 = `/uploads/invoices/${targetFile004}`;
 
       let custJai = await Customer.findOne({ name: /Jai Enterprises/i });
       if (!custJai) {
@@ -333,6 +356,7 @@ const checkAndMigrateUploadedStf011 = async () => {
 
 let branchesUpdated = false;
 const updateBranchesForExistingInvoices = async () => {
+  if (branchesUpdated) return;
   try {
     const invoices = await Invoice.find({});
     for (const inv of invoices) {
@@ -378,16 +402,24 @@ const updateBranchesForExistingInvoices = async () => {
         await inv.save();
       }
 
-      // 5. Clean up invalid pdfAttachment or ensure attached PDF name follows: [Customer Name]- invoice  [dd-MM-yyyy].pdf
+      // 5. Clean up invalid pdfAttachment, normalize legacy localhost URLs, and sync attachment display name
       if (inv.pdfAttachment && (!inv.pdfAttachment.filename || !inv.pdfAttachment.url)) {
         inv.pdfAttachment = undefined;
         await inv.save();
-      } else if (inv.pdfAttachment && inv.customer?.name && inv.invoiceDate) {
-        const parts = inv.invoiceDate.split('T')[0].split('-');
-        const dateStr = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : inv.invoiceDate;
-        const targetName = `${inv.customer.name.trim()}- invoice  ${dateStr}.pdf`;
-        if (inv.pdfAttachment.originalName !== targetName) {
-          inv.pdfAttachment.originalName = targetName;
+      } else if (inv.pdfAttachment) {
+        let pdfChanged = false;
+        if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(inv.pdfAttachment.url)) {
+          inv.pdfAttachment.url = `/uploads/invoices/${inv.pdfAttachment.filename}`;
+          pdfChanged = true;
+        }
+        if (inv.customer?.name && inv.invoiceDate) {
+          const targetName = formatAttachmentDisplayName(inv.customer.name, inv.invoiceDate);
+          if (inv.pdfAttachment.originalName !== targetName) {
+            inv.pdfAttachment.originalName = targetName;
+            pdfChanged = true;
+          }
+        }
+        if (pdfChanged) {
           await inv.save();
         }
       }
@@ -431,6 +463,7 @@ const updateBranchesForExistingInvoices = async () => {
         }
       }
     }
+    branchesUpdated = true;
   } catch (err) {
     console.error('Failed to auto-update branches for invoices:', err.message);
   }
@@ -626,12 +659,7 @@ const update = async (req, res) => {
     if (existing.pdfAttachment && existing.pdfAttachment.filename && existing.pdfAttachment.url && !req.body.pdfAttachment) {
       const finalDate = req.body.invoiceDate || existing.invoiceDate;
       const finalCustName = req.body.customer?.name || existing.customer?.name || 'Customer';
-      let formattedDate = 'date';
-      if (finalDate) {
-        const parts = finalDate.split('T')[0].split('-');
-        formattedDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : finalDate;
-      }
-      const descriptiveName = `${finalCustName.trim()}- invoice  ${formattedDate}.pdf`;
+      const descriptiveName = formatAttachmentDisplayName(finalCustName, finalDate);
       const attObj = existing.pdfAttachment.toObject ? existing.pdfAttachment.toObject() : existing.pdfAttachment;
       req.body.pdfAttachment = {
         ...attObj,
@@ -702,22 +730,56 @@ const addPayment = async (req, res) => {
 const reportSummary = async (req, res) => {
   try {
     const { from, to } = req.query;
-    const query = { status: { $ne: 'cancelled' } };
+    const query = { status: 'issued' };
+    const paymentQuery = { status: 'issued' };
+    const endDate = to && to.length === 10 ? `${to}T23:59:59.999Z` : to;
     if (from || to) {
       query.invoiceDate = {};
       if (from) query.invoiceDate.$gte = from;
-      if (to)   query.invoiceDate.$lte = to;
+      if (endDate) query.invoiceDate.$lte = endDate;
+      paymentQuery['payments.date'] = {};
+      if (from) paymentQuery['payments.date'].$gte = from;
+      if (endDate) paymentQuery['payments.date'].$lte = endDate;
     }
-    const invoices = await Invoice.find(query);
-    const totalRevenue    = invoices.reduce((s, i) => s + i.grandTotal, 0);
-    const totalPaid       = invoices.reduce((s, i) => s + i.amountPaid, 0);
-    const totalOutstanding = invoices.reduce((s, i) => s + i.balanceDue, 0);
+    const [invoices, paymentInvoices] = await Promise.all([
+      Invoice.find(query),
+      Invoice.find(paymentQuery).select('payments'),
+    ]);
+    const sum = (field) => invoices.reduce((total, invoice) => total + (Number(invoice[field]) || 0), 0);
+    const totalRevenue = sum('grandTotal');
+    const totalPaid = sum('amountPaid');
+    const totalOutstanding = sum('balanceDue');
+    const paidThisMonth = paymentInvoices.reduce((total, invoice) => (
+      total + invoice.payments.reduce((invoiceTotal, payment) => {
+        const inRange = (!from || payment.date >= from) && (!endDate || payment.date <= endDate);
+        return invoiceTotal + (inRange ? Number(payment.amount) || 0 : 0);
+      }, 0)
+    ), 0);
     const totalInvoices   = invoices.length;
     const paidCount       = invoices.filter(i => i.paymentStatus === 'paid').length;
     const unpaidCount     = invoices.filter(i => i.paymentStatus === 'unpaid').length;
     const partialCount    = invoices.filter(i => i.paymentStatus === 'partial').length;
+    const totalCgst = sum('totalCgst');
+    const totalSgst = sum('totalSgst');
+    const totalIgst = sum('totalIgst');
+    const totalTax = sum('totalTax');
 
-    res.json({ totalRevenue, totalPaid, totalOutstanding, totalInvoices, paidCount, unpaidCount, partialCount, invoices });
+    res.json({
+      totalRevenue,
+      totalPaid,
+      totalOutstanding,
+      outstanding: totalOutstanding,
+      paidThisMonth,
+      totalInvoices,
+      totalTax,
+      totalCgst,
+      totalSgst,
+      totalIgst,
+      paidCount,
+      unpaidCount,
+      partialCount,
+      invoices,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -731,35 +793,35 @@ const uploadPdf = async (req, res) => {
     }
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) {
-      if (req.file.path && fs.existsSync(req.file.path)) {
-        try { fs.unlinkSync(req.file.path); } catch {}
-      }
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Remove old file if exists
-    if (invoice.pdfAttachment && invoice.pdfAttachment.path && fs.existsSync(invoice.pdfAttachment.path)) {
-      try { fs.unlinkSync(invoice.pdfAttachment.path); } catch (e) { console.error('Failed to unlink old PDF', e); }
+    const pdfBuffer = req.file.buffer || (req.file.path && fs.readFileSync(req.file.path));
+    if (!pdfBuffer) {
+      return res.status(400).json({ message: 'Uploaded PDF buffer is empty' });
     }
 
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const fileUrl = `${protocol}://${host}/uploads/invoices/${req.file.filename}`;
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.pdf';
+    const storedFilename = req.file.filename || `invoice-${req.params.id}-${Date.now()}${ext}`;
+    const { gridFsId } = await uploadPdfBuffer({
+      buffer: pdfBuffer,
+      filename: storedFilename,
+      metadata: {
+        invoiceId: String(invoice._id),
+        invoiceNumber: invoice.invoiceNumber,
+      },
+    });
 
-    let formattedDate = 'date';
-    if (invoice.invoiceDate) {
-      const parts = invoice.invoiceDate.split('T')[0].split('-');
-      formattedDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : invoice.invoiceDate;
-    }
-    const custName = (invoice.customer?.name || 'Customer').trim();
-    const descriptiveName = `${custName}- invoice  ${formattedDate}.pdf`;
+    await cleanupAttachmentFiles(invoice.pdfAttachment);
+
+    const descriptiveName = formatAttachmentDisplayName(invoice.customer?.name, invoice.invoiceDate);
 
     invoice.pdfAttachment = {
       originalName: descriptiveName,
-      filename:     req.file.filename,
-      path:         req.file.path,
-      url:          fileUrl,
-      size:         req.file.size,
+      filename:     storedFilename,
+      url:          `/uploads/invoices/${storedFilename}`,
+      gridFsId,
+      size:         req.file.size || pdfBuffer.length,
       uploadedAt:   new Date(),
     };
 
@@ -776,9 +838,7 @@ const deletePdf = async (req, res) => {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-    if (invoice.pdfAttachment && invoice.pdfAttachment.path && fs.existsSync(invoice.pdfAttachment.path)) {
-      try { fs.unlinkSync(invoice.pdfAttachment.path); } catch (e) { console.error('Failed to remove PDF', e); }
-    }
+    await cleanupAttachmentFiles(invoice.pdfAttachment);
 
     invoice.pdfAttachment = undefined;
     await invoice.save();
@@ -794,12 +854,14 @@ const parsePdf = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No PDF file uploaded' });
     }
-    const buf = fs.readFileSync(req.file.path);
-    const data = extractPdfInvoiceData(buf);
-    try { fs.unlinkSync(req.file.path); } catch {}
+    const buf = req.file.buffer || (req.file.path && fs.readFileSync(req.file.path));
+    const data = buf ? extractPdfInvoiceData(buf) : {};
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+    }
     res.json(data);
   } catch (err) {
-    if (req.file?.path) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
       try { fs.unlinkSync(req.file.path); } catch {}
     }
     res.status(500).json({ message: err.message });
@@ -808,16 +870,21 @@ const parsePdf = async (req, res) => {
 
 // POST /api/invoices/upload-new
 const createWithPdf = async (req, res) => {
+  let uploadedGridFsId = null;
+  let storedFilename = null;
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No PDF file uploaded' });
     }
 
+    const pdfBuffer = req.file.buffer || (req.file.path && fs.readFileSync(req.file.path));
+    if (!pdfBuffer) {
+      return res.status(400).json({ message: 'Uploaded PDF buffer is empty' });
+    }
+
     let autoData = {};
     try {
-      if (fs.existsSync(req.file.path)) {
-        autoData = extractPdfInvoiceData(fs.readFileSync(req.file.path)) || {};
-      }
+      autoData = extractPdfInvoiceData(pdfBuffer) || {};
     } catch {}
 
     const {
@@ -852,9 +919,6 @@ const createWithPdf = async (req, res) => {
     } else {
       const exists = await Invoice.findOne({ invoiceNumber: finalInvoiceNumber });
       if (exists) {
-        if (req.file.path && fs.existsSync(req.file.path)) {
-          try { fs.unlinkSync(req.file.path); } catch {}
-        }
         return res.status(400).json({ message: `Invoice number "${finalInvoiceNumber}" already exists` });
       }
     }
@@ -866,9 +930,15 @@ const createWithPdf = async (req, res) => {
     const amountPaid = isPaid ? total : 0;
     const balanceDue = isPaid ? 0 : total;
 
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const fileUrl = `${protocol}://${host}/uploads/invoices/${req.file.filename}`;
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.pdf';
+    storedFilename = req.file.filename || `invoice-inv-${Date.now()}${ext}`;
+    const uploaded = await uploadPdfBuffer({
+      buffer: pdfBuffer,
+      filename: storedFilename,
+      metadata: { invoiceNumber: finalInvoiceNumber },
+    });
+    uploadedGridFsId = uploaded.gridFsId;
+    const fileUrl = `/uploads/invoices/${storedFilename}`;
 
     let parsedItems = [];
     if (itemsJson) {
@@ -921,12 +991,7 @@ const createWithPdf = async (req, res) => {
       }
     }
 
-    let formattedPdfDate = 'date';
-    if (finalDate) {
-      const parts = finalDate.split('T')[0].split('-');
-      formattedPdfDate = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : finalDate;
-    }
-    const descriptivePdfName = `${finalCustName.trim()}- invoice  ${formattedPdfDate}.pdf`;
+    const descriptivePdfName = formatAttachmentDisplayName(finalCustName, finalDate);
 
     const invoiceData = {
       invoiceNumber: finalInvoiceNumber,
@@ -964,10 +1029,10 @@ const createWithPdf = async (req, res) => {
       notes: notes || 'Uploaded PDF invoice',
       pdfAttachment: {
         originalName: descriptivePdfName,
-        filename: req.file.filename,
-        path: req.file.path,
+        filename: storedFilename,
         url: fileUrl,
-        size: req.file.size,
+        gridFsId: uploadedGridFsId,
+        size: req.file.size || pdfBuffer.length,
         uploadedAt: new Date(),
       },
     };
@@ -975,7 +1040,10 @@ const createWithPdf = async (req, res) => {
     const invoice = await Invoice.create(invoiceData);
     res.status(201).json(invoice);
   } catch (err) {
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+    if (uploadedGridFsId || storedFilename) {
+      await deletePdfFromGridFs({ gridFsId: uploadedGridFsId, filename: storedFilename });
+    }
+    if (req.file?.path && fs.existsSync(req.file.path)) {
       try { fs.unlinkSync(req.file.path); } catch {}
     }
     res.status(400).json({ message: err.message });
@@ -988,10 +1056,7 @@ const remove = async (req, res) => {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-    // Clean up attached PDF file if exists
-    if (invoice.pdfAttachment && invoice.pdfAttachment.path && fs.existsSync(invoice.pdfAttachment.path)) {
-      try { fs.unlinkSync(invoice.pdfAttachment.path); } catch (e) { console.error('Failed to unlink PDF on invoice delete:', e); }
-    }
+    await cleanupAttachmentFiles(invoice.pdfAttachment);
 
     await Invoice.findByIdAndDelete(req.params.id);
     res.json({ message: 'Invoice deleted successfully' });

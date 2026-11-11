@@ -111,6 +111,7 @@ const invoiceSchema = new mongoose.Schema(
           filename:     { type: String },
           path:         { type: String },
           url:          { type: String },
+          gridFsId:     { type: mongoose.Schema.Types.ObjectId },
           size:         { type: Number },
           uploadedAt:   { type: Date },
         },

@@ -4,6 +4,7 @@ import { Plus, Search, Filter, FileText, Eye, Edit, Archive, Paperclip, UploadCl
 import { invoicesApi } from '../api/invoices.api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { safeFormatDate, formatInvoicePdfName } from '../utils/date.utils';
+import { resolveBackendAssetUrl } from '../utils/apiUrl';
 import toast from 'react-hot-toast';
 import DateWiseDownloadModal from '../components/invoice/DateWiseDownloadModal';
 import UploadInvoicePdfModal from '../components/invoice/UploadInvoicePdfModal';
@@ -50,17 +51,10 @@ const Invoices: React.FC = () => {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  const getPdfUrl = (url?: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
-    return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
-
   const handleDownloadAttachment = async (inv: InvoiceSummary) => {
     if (!inv.pdfAttachment?.url) return;
     const filename = formatInvoicePdfName(inv.customer?.name, inv.invoiceDate);
-    const fullUrl = getPdfUrl(inv.pdfAttachment.url);
+    const fullUrl = resolveBackendAssetUrl(inv.pdfAttachment.url);
     try {
       const res = await fetch(fullUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

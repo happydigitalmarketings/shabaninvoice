@@ -19,6 +19,7 @@ import type { Invoice } from '../types/invoice.types';
 import { formatINR } from '../utils/formatCurrency';
 import { format } from 'date-fns';
 import { safeFormatDate, formatInvoicePdfName } from '../utils/date.utils';
+import { resolveBackendAssetUrl } from '../utils/apiUrl';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -111,9 +112,9 @@ const InvoiceDetail: React.FC = () => {
 
     // If attached PDF file exists, download via blob
     if (invoice?.pdfAttachment?.url) {
+      const fullUrl = resolveBackendAssetUrl(invoice.pdfAttachment.url);
       try {
         setDownloadingPdf(true);
-        const fullUrl = getPdfDownloadUrl(invoice.pdfAttachment.url);
         const res = await fetch(fullUrl);
         if (!res.ok) throw new Error('File not accessible');
         const blob = await res.blob();
@@ -129,7 +130,7 @@ const InvoiceDetail: React.FC = () => {
         return;
       } catch (err) {
         console.warn('Fallback to opening URL:', err);
-        window.open(getPdfDownloadUrl(invoice.pdfAttachment.url), '_blank');
+        window.open(fullUrl, '_blank');
         return;
       } finally {
         setDownloadingPdf(false);
@@ -283,13 +284,6 @@ const InvoiceDetail: React.FC = () => {
     }
   };
 
-  const getPdfDownloadUrl = (url?: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const backendBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
-    return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
-
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="spinner spinner-lg" />
@@ -438,7 +432,7 @@ const InvoiceDetail: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <a
-              href={getPdfDownloadUrl(invoice.pdfAttachment.url)}
+              href={resolveBackendAssetUrl(invoice.pdfAttachment.url)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-secondary btn-sm"
