@@ -4,7 +4,9 @@
  * your cloud MongoDB Atlas database (GridFS bucket: invoice_pdfs).
  *
  * Usage:
- *   TARGET_MONGODB_URI="mongodb+srv://..." node migrate-to-atlas.js
+ *   node migrate-to-atlas.js "mongodb+srv://<user>:<password>@<cluster>.mongodb.net/shaban_billing?retryWrites=true&w=majority"
+ *   OR:
+ *   $env:TARGET_MONGODB_URI="mongodb+srv://..."; node migrate-to-atlas.js
  */
 require('dotenv').config();
 const fs = require('fs');
@@ -12,16 +14,21 @@ const path = require('path');
 const { MongoClient, GridFSBucket } = require('mongodb');
 
 const SOURCE_URI = process.env.SOURCE_MONGODB_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/shaban_billing';
-const TARGET_URI = process.env.TARGET_MONGODB_URI;
+const TARGET_URI = process.argv[2] || process.env.TARGET_MONGODB_URI;
 
 if (!TARGET_URI) {
-  console.error('❌ Please set TARGET_MONGODB_URI before running this script.');
-  console.error('   Example (PowerShell): $env:TARGET_MONGODB_URI="mongodb+srv://..."; node migrate-to-atlas.js');
+  console.error('❌ Please pass your MongoDB Atlas URI as an argument or set TARGET_MONGODB_URI.');
+  console.error('   Example: node migrate-to-atlas.js "mongodb+srv://user:pass@cluster.mongodb.net/shaban_billing?retryWrites=true&w=majority"');
   process.exit(1);
 }
 
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'invoices');
 const COLLECTIONS = ['users', 'customers', 'products', 'invoices'];
+
+function resolveDbName(client, fallback = 'shaban_billing') {
+  const name = client.db().databaseName;
+  return !name || name === 'test' ? fallback : name;
+}
 
 async function uploadToGridFs(bucket, buffer, filename, metadata = {}) {
   const existing = await bucket.find({ filename }).limit(1).toArray();
@@ -45,11 +52,14 @@ async function uploadToGridFs(bucket, buffer, filename, metadata = {}) {
   try {
     await sourceClient.connect();
     await targetClient.connect();
-    console.log('✅ Connected to source and target MongoDB instances');
 
-    const sourceDb = sourceClient.db();
-    const targetDb = targetClient.db();
+    const sourceDbName = resolveDbName(sourceClient, 'shaban_billing');
+    const targetDbName = resolveDbName(targetClient, sourceDbName);
+    const sourceDb = sourceClient.db(sourceDbName);
+    const targetDb = targetClient.db(targetDbName);
     const targetBucket = new GridFSBucket(targetDb, { bucketName: 'invoice_pdfs' });
+
+    console.log(`✅ Connected! Syncing "${sourceDbName}" -> "${targetDbName}" on Atlas`);
 
     for (const colName of COLLECTIONS) {
       const docs = await sourceDb.collection(colName).find({}).toArray();
@@ -96,4 +106,3 @@ async function uploadToGridFs(bucket, buffer, filename, metadata = {}) {
     await targetClient.close().catch(() => {});
   }
 })();
-
