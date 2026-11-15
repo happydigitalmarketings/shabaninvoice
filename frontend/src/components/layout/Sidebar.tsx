@@ -70,8 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <ChefHat size={20} color="white" />
           </div>
           <div className="sidebar-brand-text">
-            <span className="sidebar-brand-name">Shaban Foods</span>
-            <span className="sidebar-brand-tagline">Billing System</span>
+            <span className="sidebar-brand-name">Shaban Billing</span>
+            <span className="sidebar-brand-tagline">GST Invoice System</span>
           </div>
         </div>
 

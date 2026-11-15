@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stf-billing-v1';
+const CACHE_NAME = 'shaban-billing-v2';
 
 const STATIC_ASSETS = [
   '/',

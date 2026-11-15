@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
           <button
             className="btn btn-primary"
             onClick={handleInstall}
-            title="Install STF Billing App"
+            title="Install Shaban Billing"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

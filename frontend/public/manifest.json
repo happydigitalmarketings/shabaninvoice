@@ -1,7 +1,7 @@
 {
   "id": "/?source=pwa",
-  "name": "Shaban Traditional Foods Billing",
-  "short_name": "STF Billing",
+  "name": "Shaban Billing",
+  "short_name": "Shaban Billing",
   "description": "GST Invoice & Billing Management for Shaban Traditional Foods",
   "start_url": "/?source=pwa",
   "scope": "/",

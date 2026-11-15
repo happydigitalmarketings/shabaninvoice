@@ -59,10 +59,10 @@ const Login: React.FC = () => {
             <ChefHat size={36} color="white" />
           </div>
           <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 4 }}>
-            Shaban Traditional Foods
+            Shaban Billing
           </h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-            Billing & Invoice Management
+            GST Invoice & Billing Management
           </p>
         </div>
 
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
         </div>
 
         <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginTop: 'var(--space-4)' }}>
-          Shaban Traditional Foods © {new Date().getFullYear()}
+          Shaban Billing © {new Date().getFullYear()}
         </p>
       </div>
     </div>
