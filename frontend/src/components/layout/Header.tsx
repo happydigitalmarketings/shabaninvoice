@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Menu, Bell, DownloadCloud } from 'lucide-react';
+import { Menu, Bell, DownloadCloud, Sun, Moon } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
 import { promptPwaInstall, subscribeInstallState } from '../../pwa';
+import { getInitialTheme, toggleTheme } from '../../utils/theme';
 import toast from 'react-hot-toast';
 
 interface HeaderProps {
@@ -13,6 +14,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const user = useSelector((state: RootState) => state.auth.user);
   const [canInstall, setCanInstall] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme());
 
   useEffect(() => {
     return subscribeInstallState(setCanInstall);
@@ -23,6 +25,11 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
     if (installed) {
       toast.success('App installed successfully!');
     }
+  };
+
+  const handleThemeToggle = () => {
+    const next = toggleTheme();
+    setTheme(next);
   };
 
   return (
@@ -50,6 +57,16 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
       </div>
 
       <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Light / Dark Mode Toggle */}
+        <button
+          className="btn btn-ghost btn-icon"
+          onClick={handleThemeToggle}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
         {canInstall && (
           <button
             className="btn btn-primary"

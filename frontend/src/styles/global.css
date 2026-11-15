@@ -192,7 +192,7 @@ ul, ol { list-style: none; }
   left: var(--sidebar-width);
   right: 0;
   height: var(--header-height);
-  background: rgba(26, 29, 39, 0.85);
+  background: var(--color-header-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
   display: flex;
@@ -200,7 +200,7 @@ ul, ol { list-style: none; }
   justify-content: space-between;
   padding: 0 var(--space-6);
   z-index: 90;
-  transition: left var(--transition-base);
+  transition: left var(--transition-base), background var(--transition-base);
 }
 
 .header-left {
@@ -259,7 +259,7 @@ ul, ol { list-style: none; }
 }
 
 .btn-secondary {
-  background: var(--color-bg-elevated);
+  background: var(--color-bg-card);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
 }
@@ -446,12 +446,12 @@ ul, ol { list-style: none; }
   letter-spacing: 0.02em;
 }
 
-.badge-unpaid  { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
-.badge-partial { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
-.badge-paid    { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-.badge-draft   { background: rgba(158,168,197,0.15); color: #9ea8c5; border: 1px solid rgba(158,168,197,0.25); }
-.badge-issued  { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
-.badge-cancelled { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.15); text-decoration: line-through; }
+.badge-unpaid  { background: var(--badge-unpaid-bg); color: var(--badge-unpaid-text); border: 1px solid var(--badge-unpaid-border); }
+.badge-partial { background: var(--badge-partial-bg); color: var(--badge-partial-text); border: 1px solid var(--badge-partial-border); }
+.badge-paid    { background: var(--badge-paid-bg); color: var(--badge-paid-text); border: 1px solid var(--badge-paid-border); }
+.badge-draft   { background: var(--badge-draft-bg); color: var(--badge-draft-text); border: 1px solid var(--badge-draft-border); }
+.badge-issued  { background: var(--badge-issued-bg); color: var(--badge-issued-text); border: 1px solid var(--badge-issued-border); }
+.badge-cancelled { background: var(--badge-unpaid-bg); color: var(--badge-unpaid-text); border: 1px solid var(--badge-unpaid-border); text-decoration: line-through; }
 
 /* =============================================
    SEARCH BAR
@@ -701,7 +701,8 @@ ul, ol { list-style: none; }
 .loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15,17,23,0.6);
+  background: rgba(15,23,42,0.3);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -3,10 +3,12 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Plus, Users, Package,
   BarChart3, Settings, LogOut, ChefHat, DownloadCloud,
+  Sun, Moon,
 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/authSlice';
 import { promptPwaInstall, subscribeInstallState } from '../../pwa';
+import { getInitialTheme, toggleTheme } from '../../utils/theme';
 import toast from 'react-hot-toast';
 
 interface SidebarProps {
@@ -27,6 +29,7 @@ const navItems = [
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const [canInstall, setCanInstall] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme());
 
   useEffect(() => {
     return subscribeInstallState(setCanInstall);
@@ -34,6 +37,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const handleThemeToggle = () => {
+    const next = toggleTheme();
+    setTheme(next);
   };
 
   const handleInstall = async () => {
@@ -104,6 +112,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <span>Install App</span>
             </button>
           )}
+
+          <button
+            className="nav-item btn-ghost"
+            style={{ width: '100%', marginBottom: '4px' }}
+            onClick={handleThemeToggle}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
 
           <button className="nav-item btn-ghost" style={{ width: '100%' }} onClick={handleLogout}>
             <LogOut size={18} />

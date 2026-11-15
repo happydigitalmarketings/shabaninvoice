@@ -6,9 +6,9 @@
   /* Brand Colors */
   --color-primary: #c8521a;        /* warm spice orange */
   --color-primary-dark: #a63e10;
-  --color-primary-light: #f0824a;
-  --color-primary-50: #fff3ee;
-  --color-primary-100: #fde0cc;
+  --color-primary-light: #ea6b31;
+  --color-primary-50: #fff4ed;
+  --color-primary-100: #ffe4d6;
 
   --color-secondary: #2d6a4f;      /* deep forest green */
   --color-secondary-dark: #1b4332;
@@ -18,36 +18,58 @@
   --color-accent: #f4a261;         /* golden amber */
   --color-accent-dark: #e76f51;
 
-  /* Neutrals */
-  --color-bg: #0f1117;
-  --color-bg-card: #1a1d27;
-  --color-bg-elevated: #22263a;
-  --color-bg-input: #1e2235;
-  --color-bg-hover: #2a2f45;
-  --color-border: #2e3350;
-  --color-border-subtle: #252840;
+  /* Default Theme: Clean, Crisp, Modern Light Business Palette */
+  --color-bg: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #f1f5f9;
+  --color-bg-input: #ffffff;
+  --color-bg-hover: #f1f5f9;
+  --color-header-bg: rgba(255, 255, 255, 0.92);
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
 
   /* Text */
-  --color-text-primary: #f0f2ff;
-  --color-text-secondary: #9ea8c5;
-  --color-text-muted: #5e6a8a;
-  --color-text-inverse: #0f1117;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #ffffff;
 
   /* Status Colors */
-  --color-success: #22c55e;
-  --color-success-bg: #052e16;
-  --color-warning: #f59e0b;
-  --color-warning-bg: #1c1300;
-  --color-error: #ef4444;
-  --color-error-bg: #1c0606;
-  --color-info: #3b82f6;
-  --color-info-bg: #0a1628;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-bg: #fee2e2;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+
+  /* Status Badges (Light mode) */
+  --badge-unpaid-bg: #fee2e2;
+  --badge-unpaid-text: #b91c1c;
+  --badge-unpaid-border: #fca5a5;
+
+  --badge-partial-bg: #fef3c7;
+  --badge-partial-text: #b45309;
+  --badge-partial-border: #fcd34d;
+
+  --badge-paid-bg: #dcfce7;
+  --badge-paid-text: #15803d;
+  --badge-paid-border: #86efac;
+
+  --badge-draft-bg: #f1f5f9;
+  --badge-draft-text: #475569;
+  --badge-draft-border: #cbd5e1;
+
+  --badge-issued-bg: #dbeafe;
+  --badge-issued-text: #1d4ed8;
+  --badge-issued-border: #93c5fd;
 
   /* Payment Status */
-  --color-unpaid: #ef4444;
-  --color-partial: #f59e0b;
-  --color-paid: #22c55e;
-  --color-draft: #9ea8c5;
+  --color-unpaid: #dc2626;
+  --color-partial: #d97706;
+  --color-paid: #16a34a;
+  --color-draft: #64748b;
 
   /* Typography */
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
@@ -85,11 +107,11 @@
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 24px rgba(200,82,26,0.15);
+  /* Shadows (clean subtle elevation) */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 24px rgba(15, 23, 42, 0.09), 0 4px 8px rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 20px rgba(200, 82, 26, 0.2);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -101,4 +123,55 @@
   --sidebar-collapsed: 70px;
   --header-height: 60px;
   --mobile-nav-height: 60px;
+}
+
+/* Optional Dark Theme */
+html[data-theme="dark"] {
+  --color-bg: #0f1117;
+  --color-bg-card: #1a1d27;
+  --color-bg-elevated: #22263a;
+  --color-bg-input: #1e2235;
+  --color-bg-hover: #2a2f45;
+  --color-header-bg: rgba(26, 29, 39, 0.85);
+  --color-border: #2e3350;
+  --color-border-subtle: #252840;
+
+  --color-text-primary: #f0f2ff;
+  --color-text-secondary: #9ea8c5;
+  --color-text-muted: #5e6a8a;
+  --color-text-inverse: #0f1117;
+
+  --color-success: #22c55e;
+  --color-success-bg: #052e16;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #1c1300;
+  --color-error: #ef4444;
+  --color-error-bg: #1c0606;
+  --color-info: #3b82f6;
+  --color-info-bg: #0a1628;
+
+  --badge-unpaid-bg: rgba(239, 68, 68, 0.15);
+  --badge-unpaid-text: #f87171;
+  --badge-unpaid-border: rgba(239, 68, 68, 0.25);
+
+  --badge-partial-bg: rgba(245, 158, 11, 0.15);
+  --badge-partial-text: #fbbf24;
+  --badge-partial-border: rgba(245, 158, 11, 0.25);
+
+  --badge-paid-bg: rgba(34, 197, 94, 0.15);
+  --badge-paid-text: #4ade80;
+  --badge-paid-border: rgba(34, 197, 94, 0.25);
+
+  --badge-draft-bg: rgba(158, 168, 197, 0.15);
+  --badge-draft-text: #9ea8c5;
+  --badge-draft-border: rgba(158, 168, 197, 0.25);
+
+  --badge-issued-bg: rgba(59, 130, 246, 0.15);
+  --badge-issued-text: #60a5fa;
+  --badge-issued-border: rgba(59, 130, 246, 0.25);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px rgba(200,82,26,0.15);
 }
