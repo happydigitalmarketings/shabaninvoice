@@ -233,3 +233,4 @@ for (const t of targets) {
 }
 
 console.log('🎉 All PWA icons generated successfully in frontend/public/icons!');
+

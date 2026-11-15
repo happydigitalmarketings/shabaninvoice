@@ -66,3 +66,4 @@ export async function promptPwaInstall(): Promise<boolean> {
   installListeners.forEach((fn) => fn(false));
   return choice.outcome === 'accepted';
 }
+
