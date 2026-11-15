@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Plus, Users, Package,
-  BarChart3, Settings, LogOut, ChefHat,
+  BarChart3, Settings, LogOut, ChefHat, DownloadCloud,
 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/authSlice';
+import { promptPwaInstall, subscribeInstallState } from '../../pwa';
+import toast from 'react-hot-toast';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -24,9 +26,22 @@ const navItems = [
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    return subscribeInstallState(setCanInstall);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const handleInstall = async () => {
+    const installed = await promptPwaInstall();
+    if (installed) {
+      toast.success('App installed successfully!');
+      onClose();
+    }
   };
 
   return (
@@ -72,6 +87,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="sidebar-footer">
+          {canInstall && (
+            <button
+              className="nav-item btn-ghost"
+              style={{
+                width: '100%',
+                marginBottom: '8px',
+                background: 'rgba(200, 82, 26, 0.15)',
+                border: '1px solid rgba(200, 82, 26, 0.4)',
+                color: '#ff8a4c',
+                fontWeight: 600,
+              }}
+              onClick={handleInstall}
+            >
+              <DownloadCloud size={18} />
+              <span>Install App</span>
+            </button>
+          )}
+
           <button className="nav-item btn-ghost" style={{ width: '100%' }} onClick={handleLogout}>
             <LogOut size={18} />
             <span>Logout</span>

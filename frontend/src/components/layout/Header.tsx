@@ -1,7 +1,9 @@
-import React from 'react';
-import { Menu, Bell } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Menu, Bell, DownloadCloud } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store/store';
+import { promptPwaInstall, subscribeInstallState } from '../../pwa';
+import toast from 'react-hot-toast';
 
 interface HeaderProps {
   title: string;
@@ -10,6 +12,18 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    return subscribeInstallState(setCanInstall);
+  }, []);
+
+  const handleInstall = async () => {
+    const installed = await promptPwaInstall();
+    if (installed) {
+      toast.success('App installed successfully!');
+    }
+  };
 
   return (
     <header className="header">
@@ -35,19 +49,46 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         <h1 className="header-title">{title}</h1>
       </div>
 
-      <div className="header-right">
+      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {canInstall && (
+          <button
+            className="btn btn-primary"
+            onClick={handleInstall}
+            title="Install STF Billing App"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              fontSize: '13px',
+              fontWeight: 600,
+              borderRadius: '8px',
+            }}
+          >
+            <DownloadCloud size={16} />
+            <span>Install App</span>
+          </button>
+        )}
+
         <button className="btn btn-ghost btn-icon" aria-label="Notifications">
           <Bell size={18} />
         </button>
 
-        <div style={{
-          width: 36, height: 36,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', fontWeight: 700, color: 'white',
-          cursor: 'pointer',
-        }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px',
+            fontWeight: 700,
+            color: 'white',
+            cursor: 'pointer',
+          }}
+        >
           {user?.name?.charAt(0).toUpperCase() || 'A'}
         </div>
       </div>
